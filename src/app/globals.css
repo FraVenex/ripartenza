@@ -1,0 +1,102 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body {
+  background-color: theme('colors.bg');
+  color: theme('colors.ink.DEFAULT');
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  user-select: none;
+}
+
+input, textarea, select {
+  user-select: text;
+}
+
+* {
+  border-color: theme('colors.line');
+}
+
+::selection {
+  background-color: theme('colors.track.soft');
+  color: theme('colors.track.dark');
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid theme('colors.zone.DEFAULT');
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+.card {
+  background-color: theme('colors.surface');
+  border: 1px solid theme('colors.line');
+  border-radius: theme('borderRadius.card');
+  box-shadow: theme('boxShadow.card');
+}
+
+.ios-glass {
+  background-color: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+}
+
+.liquid-glass-dock {
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(28px) saturate(190%);
+  -webkit-backdrop-filter: blur(28px) saturate(190%);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.12), 0 4px 12px -2px rgba(0, 0, 0, 0.08);
+}
+
+.liquid-glass-sidebar {
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+}
+
+.ios-btn-active {
+  transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.15s ease;
+}
+
+.ios-btn-active:active {
+  transform: scale(0.96);
+  opacity: 0.85;
+}
+
+.ios-card-active {
+  transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.15s ease;
+}
+
+.ios-card-active:active {
+  transform: scale(0.985);
+}
+
+.pb-safe {
+  padding-bottom: max(env(safe-area-inset-bottom), 16px);
+}
+
+.pt-safe {
+  padding-top: max(env(safe-area-inset-top), 12px);
+}
+
+

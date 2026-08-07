@@ -35,30 +35,67 @@ export default async function WorkoutDetailPage({ params }: { params: { id: stri
 
       {workout.structure.steps.length > 0 && (
         <section className="card divide-y divide-line/60 overflow-hidden shadow-card">
-          {workout.structure.steps.map((step, i) => (
-            <div key={i} className="flex items-center justify-between gap-3 p-3.5">
-              <div>
-                <p className="font-display text-base font-semibold leading-tight text-ink">{step.label}</p>
-                {step.notes && <p className="mt-0.5 text-xs text-ink-soft">{step.notes}</p>}
+          {workout.structure.steps.map((item, i) => {
+            const isRepeat = (item as any).type === 'repeat' || Boolean((item as any).repeatCount && (item as any).steps);
+
+            if (isRepeat) {
+              const repeat = item as any;
+              return (
+                <div key={i} className="bg-bg/40 p-3.5">
+                  <div className="mb-2 flex items-center justify-between">
+                    <span className="rounded-pill bg-track/10 px-2.5 py-0.5 font-stat text-xs font-bold text-track">
+                      {repeat.repeatCount}× Ripetizioni
+                    </span>
+                  </div>
+                  <div className="flex flex-col gap-2 pl-3 border-l-2 border-track/30">
+                    {(repeat.steps || []).map((sub: any, j: number) => (
+                      <div key={j} className="flex items-center justify-between gap-3 text-xs">
+                        <div>
+                          <p className="font-display font-semibold text-ink">{sub.label}</p>
+                          {sub.notes && <p className="text-[11px] text-ink-soft">{sub.notes}</p>}
+                        </div>
+                        <div className="shrink-0 text-right font-stat text-[11px] text-ink-soft tabular">
+                          {sub.durationMin ? <p>{sub.durationMin} min</p> : null}
+                          {sub.distanceKm ? <p>{sub.distanceKm} km</p> : null}
+                          {sub.targetPace ? <p>{sub.targetPace}</p> : null}
+                          {sub.targetHrZone ? <p>FC: {sub.targetHrZone}</p> : null}
+                          {sub.targetCadence ? <p>Cad: {sub.targetCadence}</p> : null}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            }
+
+            const step = item as any;
+            return (
+              <div key={i} className="flex items-center justify-between gap-3 p-3.5">
+                <div>
+                  <p className="font-display text-base font-semibold leading-tight text-ink">{step.label}</p>
+                  {step.notes && <p className="mt-0.5 text-xs text-ink-soft">{step.notes}</p>}
+                </div>
+                <div className="shrink-0 text-right font-stat text-xs text-ink-soft tabular">
+                  {step.durationMin ? <p>{step.durationMin} min</p> : null}
+                  {step.distanceKm ? <p>{step.distanceKm} km</p> : null}
+                  {step.targetPace ? <p>{step.targetPace}</p> : null}
+                  {step.targetHrZone ? <p>FC: {step.targetHrZone}</p> : null}
+                  {step.targetCadence ? <p>Cad: {step.targetCadence}</p> : null}
+                </div>
               </div>
-              <div className="shrink-0 text-right font-stat text-xs text-ink-soft tabular">
-                {step.durationMin ? <p>{step.durationMin} min</p> : null}
-                {step.distanceKm ? <p>{step.distanceKm} km</p> : null}
-                {step.targetPace ? <p>{step.targetPace}</p> : null}
-                {step.targetHrZone ? <p>{step.targetHrZone}</p> : null}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </section>
       )}
 
       {workout.completedActivity && (
         <section className="card p-4 shadow-card">
           <p className="mb-2 font-display text-base font-bold text-ink">Svolto (Garmin)</p>
-          <div className="grid grid-cols-3 gap-2 font-stat text-xs tabular">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 font-stat text-xs tabular">
             {workout.completedActivity.distanceM && <p className="rounded-ios bg-bg p-2 text-center font-semibold text-ink">{(workout.completedActivity.distanceM / 1000).toFixed(2)} km</p>}
             {workout.completedActivity.durationS && <p className="rounded-ios bg-bg p-2 text-center font-semibold text-ink">{Math.round(workout.completedActivity.durationS / 60)} min</p>}
-            {workout.completedActivity.avgHrBpm && <p className="rounded-ios bg-bg p-2 text-center font-semibold text-ink">{Math.round(workout.completedActivity.avgHrBpm)} bpm</p>}
+            {workout.completedActivity.avgHrBpm && <p className="rounded-ios bg-bg p-2 text-center font-semibold text-ink">FC Med: {Math.round(workout.completedActivity.avgHrBpm)} bpm</p>}
+            {workout.completedActivity.maxHrBpm && <p className="rounded-ios bg-bg p-2 text-center font-semibold text-ink">FC Max: {Math.round(workout.completedActivity.maxHrBpm)} bpm</p>}
           </div>
         </section>
       )}

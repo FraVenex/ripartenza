@@ -44,7 +44,10 @@ export async function POST(req: NextRequest) {
 
     const distanceM = (activity.distanceInMeters ?? activity.summary?.distanceInMeters) as number | undefined;
     const durationS = (activity.durationInSeconds ?? activity.summary?.durationInSeconds) as number | undefined;
-    const avgHr = (activity.averageHeartRateInBeatsPerMinute ?? activity.summary?.averageHeartRateInBeatsPerMinute) as
+    const avgHr = (activity.averageHeartRateInBeatsPerMinute ?? activity.summary?.averageHeartRateInBeatsPerMinute ?? activity.averageHR) as
+      | number
+      | undefined;
+    const maxHr = (activity.maxHeartRateInBeatsPerMinute ?? activity.summary?.maxHeartRateInBeatsPerMinute ?? activity.maxHR) as
       | number
       | undefined;
     const activityId = String(activity.activityId ?? activity.summaryId ?? `${garminUserId}-${startTimeS}`);
@@ -58,6 +61,7 @@ export async function POST(req: NextRequest) {
         distance_m: distanceM ?? null,
         duration_s: durationS ?? null,
         avg_hr_bpm: avgHr ?? null,
+        max_hr_bpm: maxHr ?? null,
         avg_pace_min_per_km: distanceM && durationS ? durationS / 60 / (distanceM / 1000) : null,
         raw: activity,
       },
@@ -83,6 +87,7 @@ export async function POST(req: NextRequest) {
             durationS,
             distanceM,
             avgHrBpm: avgHr,
+            maxHrBpm: maxHr,
             avgPaceMinPerKm: distanceM && durationS ? durationS / 60 / (distanceM / 1000) : null,
           },
         })

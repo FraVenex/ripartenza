@@ -38,7 +38,14 @@ export function WorkoutActions({ workout }: { workout: Workout }) {
   }
 
   function handleDiscussWithCoach() {
-    const stepsStr = workout.structure?.steps?.map((s) => `${s.label}${s.durationMin ? ` ${s.durationMin}m` : ''}${s.distanceKm ? ` ${s.distanceKm}km` : ''}`).join(', ') ?? '';
+    const stepsStr = workout.structure?.steps?.map((s) => {
+      const item = s as any;
+      if (item.type === 'repeat' || Boolean(item.repeatCount && item.steps)) {
+        const inner = (item.steps || []).map((sub: any) => `${sub.label}${sub.durationMin ? ` ${sub.durationMin}m` : ''}${sub.distanceKm ? ` ${sub.distanceKm}km` : ''}`).join(' + ');
+        return `${item.repeatCount}x(${inner})`;
+      }
+      return `${item.label}${item.durationMin ? ` ${item.durationMin}m` : ''}${item.distanceKm ? ` ${item.distanceKm}km` : ''}`;
+    }).join(', ') ?? '';
     const msg = `Vorrei discutere e modificare l'allenamento "${workout.title}" del ${workout.date} (${workout.type}${stepsStr ? `: ${stepsStr}` : ''}). Vorrei cambiare...`;
     router.push(`/coach?initial_message=${encodeURIComponent(msg)}`);
   }

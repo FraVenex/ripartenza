@@ -68,7 +68,9 @@ export function buildAssistantSystemPrompt({ medicalProfile, recentWorkouts, gar
 					const doneText = done
 						? ` — svolto: ${done.distanceM ? `${(done.distanceM / 1000).toFixed(1)}km` : ""} ${
 								done.durationS ? `${Math.round(done.durationS / 60)}min` : ""
-							} ${done.avgHrBpm ? `FC media ${done.avgHrBpm}` : ""}`.trim()
+							} ${done.avgHrBpm ? `FC media ${Math.round(done.avgHrBpm)}` : ""}${
+								done.maxHrBpm ? ` FC max ${Math.round(done.maxHrBpm)}` : ""
+							}`.trim()
 						: "";
 					const feedback = [w.rpe != null ? `RPE riportato ${w.rpe}/10` : null, w.painScore != null ? `dolore riportato ${w.painScore}/10${w.painLocation ? ` (${w.painLocation})` : ""}` : null]
 						.filter(Boolean)
@@ -88,8 +90,10 @@ export function buildAssistantSystemPrompt({ medicalProfile, recentWorkouts, gar
 								.toString()
 								.padStart(2, "0")}"/km`
 						: "";
-					const hr = a.avgHrBpm ? `FC media ${Math.round(a.avgHrBpm)} bpm` : "";
-					return `- ${a.date} · Attività Garmin (${a.type}): ${dist}, ${dur}${pace ? `, passo medio ${pace}` : ""}${hr ? `, ${hr}` : ""}`;
+					const hrAvg = a.avgHrBpm ? `FC media ${Math.round(a.avgHrBpm)} bpm` : "";
+					const hrMax = a.maxHrBpm ? `FC max ${Math.round(a.maxHrBpm)} bpm` : "";
+					const hrText = [hrAvg, hrMax].filter(Boolean).join(", ");
+					return `- ${a.date} · Attività Garmin (${a.type}): ${dist}, ${dur}${pace ? `, passo medio ${pace}` : ""}${hrText ? `, ${hrText}` : ""}`;
 				})
 				.join("\n")
 		: "Nessuna attività di corsa registrata nel database da Garmin Connect.";
@@ -118,9 +122,9 @@ REGOLE TASSATIVE DI COMPORTAMENTO E COERENZA DELLE DATE
    - Se l'utente ti chiede di cambiare o spostare un allenamento esistente (o una settimana) o ricominciare da zero, genera il nuovo piano o la modifica sia nel testo sia nel blocco \`\`\`workout_json ... \`\`\`.
    - Quando valuti una corsa appena scaricata da Garmin (tramite sync o inserimento), analizza oggettivamente durata, distanza, passo e frequenza cardiaca rispetto a quanto programmato.
    - Se l'utente ha inserito un feedback (es. dolore all'anca o difficoltà), usalo come indicatore primario. Se l'utente NON ha fornito feedback esplicito, prendi comunque una decisione autonoma analizzando i dati di prestazione e lo storico consolidato del carico. Se individui rischi di sovraccarico o scostamenti eccessivi, adatta subito il piano futuro producendo il blocco \`\`\`workout_json ... \`\`\`.
-4. STRUTTURAZIONE DELLE FASI PER OROLOGI GARMIN (MANDATORIO):
-   - Per gli allenamenti con alternanza cammina-corri (es. 6x 2 min corsa + 1:30 min camminata) o ripetute, DEVI SEMPRE inserire nell'array "steps" di "structure" TUTTE LE SINGOLE FASI ATOMICHE SEQUENZIALI in modo esplicito (es. Riscaldamento -> Corsa -> Camminata -> Corsa -> Camminata ... -> Defaticamento).
-   - NON racchiudere MAI un blocco di ripetizioni in un unico step aggregato! Ogni ciclo deve contenere chiaramente la sua fase di Corsa e la sua fase di Camminata/Recupero ben distinte con i relativi tempi/distanze.
+ 4. STRUTTURAZIONE DELLE FASI E LIMITI PER OROLOGI GARMIN (MANDATORIO):
+   - Per gli allenamenti con alternanza cammina-corri o ripetute (es. 6x 2 min corsa + 1:30 min camminata), DEVI USARE i gruppi di ripetizione di tipo "repeat" con "repeatCount" ed il sotto-array "steps" contenente le fasi della ripetizione (es. 1 fase Corsa ed 1 fase Camminata/Recupero).
+   - Specifica SEMPRE per le fasi i limiti/target pertinenti: "targetHrZone" (es. "Z1", "Z2", "Z3"), "targetPace" (es. "5:00-5:30 min/km") o "targetCadence" (es. "165-175").
 
 FORMATI JSON PER AGGIORNAMENTO AUTOMATICO DATABASE:
 
@@ -144,12 +148,16 @@ Se proponi o modifichi allenamenti (per 8 settimane o per singolo giorno):
   "description": "string",
   "structure": {
     "steps": [
-      { "label": "Riscaldamento", "durationMin": 5 },
-      { "label": "Corsa", "durationMin": 2 },
-      { "label": "Camminata", "durationMin": 1.5 },
-      { "label": "Corsa", "durationMin": 2 },
-      { "label": "Camminata", "durationMin": 1.5 },
-      { "label": "Defaticamento", "durationMin": 5 }
+      { "label": "Riscaldamento", "durationMin": 5, "targetHrZone": "Z1" },
+      {
+        "type": "repeat",
+        "repeatCount": 6,
+        "steps": [
+          { "label": "Corsa", "durationMin": 2, "targetPace": "5:00-5:30 min/km", "targetHrZone": "Z2" },
+          { "label": "Camminata", "durationMin": 1.5, "targetHrZone": "Z1" }
+        ]
+      },
+      { "label": "Defaticamento", "durationMin": 5, "targetHrZone": "Z1" }
     ]
   }
 }

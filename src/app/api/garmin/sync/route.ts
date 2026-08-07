@@ -53,6 +53,7 @@ export async function POST(req: Request) {
       const distanceM = act.distance ?? null;
       const durationS = act.duration ?? null;
       const avgHr = act.averageHR ?? null;
+      const maxHr = act.maxHR ?? null;
       const avgSpeedMS = act.averageSpeed ?? 0;
       const avgPaceMinKm = avgSpeedMS > 0 ? (1000 / avgSpeedMS) / 60 : null;
 
@@ -65,6 +66,7 @@ export async function POST(req: Request) {
           distance_m: distanceM,
           duration_s: durationS,
           avg_hr_bpm: avgHr,
+          max_hr_bpm: maxHr,
           avg_pace_min_per_km: avgPaceMinKm,
           raw: act,
         },
@@ -90,6 +92,7 @@ export async function POST(req: Request) {
               durationS,
               distanceM,
               avgHrBpm: avgHr,
+              maxHrBpm: maxHr,
               avgPaceMinPerKm: avgPaceMinKm,
             },
           })

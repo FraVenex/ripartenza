@@ -58,6 +58,7 @@ export interface GarminActivityLogItem {
   distanceM: number | null;
   durationS: number | null;
   avgHrBpm: number | null;
+  maxHrBpm: number | null;
   avgPaceMinPerKm: number | null;
 }
 
@@ -80,16 +81,21 @@ export async function loadRecentGarminActivities(
 
   const { data, error } = await query;
   if (error || !data) return [];
-  return data.map((row) => ({
-    id: row.id as string,
-    garminActivityId: row.garmin_activity_id as string,
-    date: row.date as string,
-    type: (row.type as string) ?? 'running',
-    distanceM: (row.distance_m as number) ?? null,
-    durationS: (row.duration_s as number) ?? null,
-    avgHrBpm: (row.avg_hr_bpm as number) ?? null,
-    avgPaceMinPerKm: (row.avg_pace_min_per_km as number) ?? null,
-  }));
+  return data.map((row) => {
+    const rawObj = (row.raw ?? {}) as Record<string, any>;
+    const maxHr = (row.max_hr_bpm as number) ?? rawObj.maxHR ?? rawObj.maxHeartRateInBeatsPerMinute ?? rawObj.summary?.maxHeartRateInBeatsPerMinute ?? null;
+    return {
+      id: row.id as string,
+      garminActivityId: row.garmin_activity_id as string,
+      date: row.date as string,
+      type: (row.type as string) ?? 'running',
+      distanceM: (row.distance_m as number) ?? null,
+      durationS: (row.duration_s as number) ?? null,
+      avgHrBpm: (row.avg_hr_bpm as number) ?? null,
+      maxHrBpm: maxHr,
+      avgPaceMinPerKm: (row.avg_pace_min_per_km as number) ?? null,
+    };
+  });
 }
 
 export function mapWorkoutRow(row: Record<string, unknown>): Workout {

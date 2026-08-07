@@ -33,16 +33,26 @@ export const WORKOUT_TYPE_COLOR: Record<WorkoutType, 'track' | 'recovery' | 'zon
 export type WorkoutStatus = 'planned' | 'completed' | 'skipped' | 'modified';
 
 export interface WorkoutStep {
+  type?: 'step';
   label: string;
   durationMin?: number;
   distanceKm?: number;
   targetPace?: string;
   targetHrZone?: string;
+  targetCadence?: string;
   notes?: string;
 }
 
-export interface WorkoutStructure {
+export interface WorkoutRepeatGroup {
+  type: 'repeat';
+  repeatCount: number;
   steps: WorkoutStep[];
+}
+
+export type WorkoutStepOrGroup = WorkoutStep | WorkoutRepeatGroup;
+
+export interface WorkoutStructure {
+  steps: WorkoutStepOrGroup[];
   totalDurationMin?: number;
   totalDistanceKm?: number;
 }
@@ -72,6 +82,7 @@ export interface CompletedActivitySummary {
   durationS?: number;
   distanceM?: number;
   avgHrBpm?: number;
+  maxHrBpm?: number;
   avgPaceMinPerKm?: number;
   elevationGainM?: number;
 }

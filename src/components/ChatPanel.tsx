@@ -179,24 +179,6 @@ function ChatPanelContent() {
           </div>
         )}
 
-        {proposals.length > 0 && (
-          <div className="flex flex-col gap-2 pt-2">
-            <p className="font-stat text-[11px] uppercase tracking-wider text-ink-faint">Allenamenti aggiornati nel piano:</p>
-            {proposals.map((p, i) => (
-              <div key={i} className="card flex items-center justify-between gap-3 p-3 shadow-card">
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-track-dark">{WORKOUT_TYPE_LABEL[p.type] ?? p.type}</p>
-                  <p className="font-display text-base font-semibold leading-tight">{p.title}</p>
-                  <p className="mt-0.5 font-stat text-xs text-ink-faint">{p.date}</p>
-                </div>
-                <span className="rounded-pill bg-recovery px-3 py-1 text-xs font-semibold text-white">
-                  Salvato ✓
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
-
         {error && <p className="text-center text-xs font-medium text-track-dark">{error}</p>}
         <div ref={bottomRef} />
       </div>

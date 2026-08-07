@@ -66,7 +66,7 @@ export async function evaluateAndAdaptWorkoutExecution(
     : 'L\'utente non ha inserito alcun feedback esplicito (nessuna indicazione su dolore all\'anca, RPE o note).';
 
   const completedStatsText = completed
-    ? `Dati registrati: Distanza ${(completed.distanceM ? completed.distanceM / 1000 : 0).toFixed(2)} km, Durata ${Math.round((completed.durationS ?? 0) / 60)} min, Frequenza cardiaca media ${completed.avgHrBpm ? Math.round(completed.avgHrBpm) + ' bpm' : 'N/D'}`
+    ? `Dati registrati: Distanza ${(completed.distanceM ? completed.distanceM / 1000 : 0).toFixed(2)} km, Durata ${Math.round((completed.durationS ?? 0) / 60)} min, Frequenza cardiaca media ${completed.avgHrBpm ? Math.round(completed.avgHrBpm) + ' bpm' : 'N/D'}, Frequenza cardiaca massima ${completed.maxHrBpm ? Math.round(completed.maxHrBpm) + ' bpm' : 'N/D'}, Passo medio ${completed.avgPaceMinPerKm ? `${Math.floor(completed.avgPaceMinPerKm)}'${Math.round((completed.avgPaceMinPerKm % 1) * 60).toString().padStart(2, '0')}"/km` : 'N/D'}`
     : 'Dati attività registrati non disponibili in dettaglio.';
 
   const evaluationPrompt = `VALUTAZIONE AUTOMATICA E EVENTUALE ADATTAMENTO DEL PIANO DOPO NUOVI DATI DI CORSA.

@@ -17,7 +17,15 @@ export function GarminAutoSync() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ auto: true }),
-    }).catch(() => {});
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.coachEvaluations && data.coachEvaluations.length > 0) {
+          sessionStorage.setItem('latest_coach_evaluation', JSON.stringify(data.coachEvaluations[0]));
+          window.dispatchEvent(new CustomEvent('garmin_sync_completed', { detail: data }));
+        }
+      })
+      .catch(() => {});
   }, []);
 
   return null;

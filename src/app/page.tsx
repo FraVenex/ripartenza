@@ -5,6 +5,7 @@ import { loadRecentWorkouts } from '@/lib/server/userContext';
 import { WeekTrack } from '@/components/WeekTrack';
 import { WorkoutCard } from '@/components/WorkoutCard';
 import { LoadLine } from '@/components/LoadLine';
+import { CoachSyncNotice } from '@/components/CoachSyncNotice';
 
 function startOfWeek(d: Date): Date {
   const date = new Date(d);
@@ -36,6 +37,8 @@ export default async function DashboardPage() {
         <p className="font-stat text-[11px] font-semibold uppercase tracking-wider text-ink-faint">Questa settimana</p>
         <h1 className="font-display text-4xl font-extrabold tracking-tight text-ink">Oggi</h1>
       </header>
+
+      <CoachSyncNotice />
 
       <section className="card p-4 shadow-card">
         <WeekTrack weekStart={weekStart} workouts={weekWorkouts} />

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { requireUser, loadDecryptedGarminCredentials } from '@/lib/server/userContext';
 import { getGarminActivities, isRunningActivity } from '@/lib/garmin/client';
+import { evaluateAndAdaptWorkoutExecution, type CoachEvaluationResult } from '@/lib/ai/coachAdapter';
 
 export const runtime = 'nodejs';
 
@@ -44,6 +45,7 @@ export async function POST(req: Request) {
     const runningActivities = activities.filter((act) => isRunningActivity(act.activityType?.typeKey));
 
     let savedCount = 0;
+    const completedWorkoutIds: string[] = [];
 
     for (const act of runningActivities) {
       const activityId = String(act.activityId);
@@ -92,9 +94,17 @@ export async function POST(req: Request) {
             },
           })
           .eq('id', matchingWorkout.id);
+
+        completedWorkoutIds.push(matchingWorkout.id);
       }
 
       savedCount += 1;
+    }
+
+    const coachEvaluations: CoachEvaluationResult[] = [];
+    for (const wId of completedWorkoutIds) {
+      const evalRes = await evaluateAndAdaptWorkoutExecution(supabase, user.id, wId);
+      if (evalRes) coachEvaluations.push(evalRes);
     }
 
     return NextResponse.json({
@@ -102,8 +112,10 @@ export async function POST(req: Request) {
       message: `Sincronizzate ${savedCount} sessioni di corsa da Garmin Connect ✓`,
       syncedCount: savedCount,
       daysFetched: daysToFetch,
+      coachEvaluations,
     });
   } catch (e) {
     return NextResponse.json({ error: `Sincronizzazione Garmin fallita: ${(e as Error).message}` }, { status: 502 });
   }
 }
+

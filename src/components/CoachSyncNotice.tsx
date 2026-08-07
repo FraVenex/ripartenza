@@ -79,7 +79,7 @@ export function CoachSyncNotice() {
         </Link>
         {evaluation.planAdapted && (
           <Link
-            href="/plan"
+            href="/"
             className="ios-btn-active rounded-pill bg-track/10 px-3 py-1 text-xs font-semibold text-track"
           >
             Vedi nuovo piano

@@ -41,6 +41,13 @@ export async function POST(req: NextRequest) {
     await supabase.from('workouts').update({ garmin_workout_id: garminWorkoutId, source: workout.source === 'ai' ? 'ai' : 'garmin' }).eq('id', workoutId);
     return NextResponse.json({ ok: true, garminWorkoutId });
   } catch (e) {
-    return NextResponse.json({ error: (e as Error).message }, { status: 502 });
+    const msg = (e as Error).message || '';
+    if (msg.includes('429') || msg.includes('rate-limited') || msg.includes('rate_limited') || msg.includes('1015')) {
+      return NextResponse.json(
+        { error: 'Garmin Connect ha temporaneamente limitato le richieste di login (Rate Limit 429). Attendi circa 30-60 secondi prima di riprovare.' },
+        { status: 429 }
+      );
+    }
+    return NextResponse.json({ error: msg }, { status: 502 });
   }
 }

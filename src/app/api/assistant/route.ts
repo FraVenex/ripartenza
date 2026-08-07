@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
-import { requireUser, loadMedicalProfile, loadRecentWorkouts, loadRecentGarminActivities, loadDecryptedAiSettings } from '@/lib/server/userContext';
+import { requireUser, loadMedicalProfile, loadRecentWorkouts, loadRecentGarminActivities, loadDecryptedAiSettings, sanitizeWorkoutStructure } from '@/lib/server/userContext';
 import { buildAssistantSystemPrompt } from '@/lib/ai/systemPrompt';
 import { callLlm, extractWorkoutJsonBlocks, extractProfileUpdateJsonBlocks, stripJsonBlocks, type ChatTurn } from '@/lib/ai/providers';
 
@@ -140,7 +140,7 @@ export async function POST(req: NextRequest) {
             type: item.type,
             title: item.title,
             description: item.description ?? '',
-            structure: item.structure ?? { steps: [] },
+            structure: sanitizeWorkoutStructure(item.structure ?? { steps: [] }),
             source: 'ai',
             status: 'planned',
           };

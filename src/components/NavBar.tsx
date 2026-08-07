@@ -5,8 +5,7 @@ import { usePathname } from 'next/navigation';
 import clsx from 'clsx';
 
 const ITEMS = [
-  { href: '/', label: 'Oggi', icon: TodayIcon },
-  { href: '/plan', label: 'Piano', icon: PlanIcon },
+  { href: '/', label: 'Piano', icon: PlanIcon },
   { href: '/coach', label: 'Coach', icon: CoachIcon },
   { href: '/profile', label: 'Profilo', icon: ProfileIcon },
   { href: '/settings', label: 'Impostazioni', icon: SettingsIcon },
@@ -68,15 +67,6 @@ export function NavBar() {
 
 function iconProps(className?: string) {
   return { className, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2 } as const;
-}
-
-function TodayIcon({ className, active }: { className?: string; active?: boolean }) {
-  return (
-    <svg {...iconProps(className)}>
-      <circle cx="12" cy="12" r="8" fill={active ? 'currentColor' : 'none'} fillOpacity={active ? 0.15 : 0} />
-      <path d="M12 8v4l3 2" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
 }
 
 function PlanIcon({ className, active }: { className?: string; active?: boolean }) {

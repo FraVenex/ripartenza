@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { decryptSecret } from '@/lib/crypto';
-import type { MedicalProfile, Workout, AiProvider } from '@/lib/types';
+import type { MedicalProfile, Workout, WorkoutStructure, WorkoutStep, WorkoutRepeatGroup, AiProvider } from '@/lib/types';
 import type { GarminCredentials } from '@/lib/garmin/client';
 
 export async function requireUser(supabase: SupabaseClient) {
@@ -98,7 +98,52 @@ export async function loadRecentGarminActivities(
   });
 }
 
+export function sanitizeWorkoutStructure(structure: WorkoutStructure): WorkoutStructure {
+  if (!structure || !Array.isArray(structure.steps)) return structure;
+  const cleanSteps = structure.steps.map((item) => {
+    const isRepeat = (item as any).type === 'repeat' || Boolean((item as any).repeatCount && (item as any).steps);
+    if (isRepeat) {
+      const repeatGroup = item as WorkoutRepeatGroup;
+      const sanitizedInner = (repeatGroup.steps || []).map((step) => {
+        if (isRecoveryOrWalkStep(step)) {
+          const { targetHrZone, targetPace, ...rest } = step;
+          return rest;
+        }
+        return step;
+      });
+      return { ...repeatGroup, steps: sanitizedInner };
+    } else {
+      const step = item as WorkoutStep;
+      if (isRecoveryOrWalkStep(step)) {
+        const { targetHrZone, targetPace, ...rest } = step;
+        return rest;
+      }
+      return step;
+    }
+  });
+  return { ...structure, steps: cleanSteps };
+}
+
+function isRecoveryOrWalkStep(step: WorkoutStep): boolean {
+  const fullText = `${step.label || ''} ${step.notes || ''}`.toLowerCase();
+  return (
+    fullText.includes('cammin') ||
+    fullText.includes('walk') ||
+    fullText.includes('recupero') ||
+    fullText.includes('riposo') ||
+    fullText.includes('pausa') ||
+    fullText.includes('trotterell') ||
+    fullText.includes('riscaldamento') ||
+    fullText.includes('warmup') ||
+    fullText.includes('warm-up') ||
+    fullText.includes('defaticamento') ||
+    fullText.includes('cooldown') ||
+    fullText.includes('cool-down')
+  );
+}
+
 export function mapWorkoutRow(row: Record<string, unknown>): Workout {
+  const rawStructure = (row.structure as Workout['structure']) ?? { steps: [] };
   return {
     id: row.id as string,
     planId: (row.plan_id as string) ?? null,
@@ -107,7 +152,7 @@ export function mapWorkoutRow(row: Record<string, unknown>): Workout {
     type: row.type as Workout['type'],
     title: row.title as string,
     description: (row.description as string) ?? '',
-    structure: (row.structure as Workout['structure']) ?? { steps: [] },
+    structure: sanitizeWorkoutStructure(rawStructure),
     source: row.source as Workout['source'],
     garminWorkoutId: (row.garmin_workout_id as string) ?? null,
     status: row.status as Workout['status'],

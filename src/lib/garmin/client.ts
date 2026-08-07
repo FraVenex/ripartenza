@@ -6,12 +6,49 @@ export interface GarminCredentials {
   password: string;
 }
 
-export async function loginGarminConnect(creds: GarminCredentials): Promise<GarminConnect> {
+interface CachedGarminSession {
+  oauth1: any;
+  oauth2: any;
+  timestamp: number;
+}
+
+const garminSessionCache = new Map<string, CachedGarminSession>();
+
+export async function loginGarminConnect(creds: GarminCredentials, forceRefresh = false): Promise<GarminConnect> {
+  const cached = garminSessionCache.get(creds.email);
+  const now = Date.now();
+  const maxAgeMs = 12 * 60 * 60 * 1000;
+
+  if (!forceRefresh && cached && now - cached.timestamp < maxAgeMs) {
+    try {
+      const gc = new GarminConnect({
+        username: creds.email,
+        password: creds.password,
+      });
+      gc.loadToken(cached.oauth1, cached.oauth2);
+      return gc;
+    } catch {
+      garminSessionCache.delete(creds.email);
+    }
+  }
+
   const gc = new GarminConnect({
     username: creds.email,
     password: creds.password,
   });
   await gc.login();
+
+  try {
+    const tokens = gc.exportToken();
+    if (tokens?.oauth1 && tokens?.oauth2) {
+      garminSessionCache.set(creds.email, {
+        oauth1: tokens.oauth1,
+        oauth2: tokens.oauth2,
+        timestamp: Date.now(),
+      });
+    }
+  } catch {}
+
   return gc;
 }
 
@@ -35,9 +72,20 @@ export function isRunningActivity(typeKey?: string): boolean {
 }
 
 export async function getGarminActivities(creds: GarminCredentials, limit = 30): Promise<GarminActivityItem[]> {
-  const gc = await loginGarminConnect(creds);
-  const activities = await gc.getActivities(0, limit);
-  return (activities as unknown as GarminActivityItem[]) ?? [];
+  try {
+    const gc = await loginGarminConnect(creds);
+    const activities = await gc.getActivities(0, limit);
+    return (activities as unknown as GarminActivityItem[]) ?? [];
+  } catch (e) {
+    const msg = String((e as Error)?.message || '');
+    if (msg.includes('401') || msg.includes('Unauthorized') || msg.includes('Token')) {
+      garminSessionCache.delete(creds.email);
+      const gc = await loginGarminConnect(creds, true);
+      const activities = await gc.getActivities(0, limit);
+      return (activities as unknown as GarminActivityItem[]) ?? [];
+    }
+    throw e;
+  }
 }
 
 function parseSubstepString(sub: string): WorkoutStep {
@@ -145,8 +193,7 @@ function buildGarminStepDTO(step: WorkoutStep, stepOrder: number) {
   } else if (
     fullText.includes('recupero') ||
     fullText.includes('riposo') ||
-    fullText.includes('camminat') ||
-    fullText.includes('cammina') ||
+    fullText.includes('cammin') ||
     fullText.includes('walk') ||
     fullText.includes('trotterell') ||
     fullText.includes('pausa')
@@ -159,11 +206,6 @@ function buildGarminStepDTO(step: WorkoutStep, stepOrder: number) {
   }
 
   let description = step.label || `Fase ${stepOrder}`;
-  if (stepTypeId === 4) {
-    description = 'Recupero';
-  } else if (stepTypeId === 3 && (description.toLowerCase().includes('camminat') || description.toLowerCase().includes('recupero'))) {
-    description = 'Corsa';
-  }
 
   let conditionTypeId = 1;
   let conditionTypeKey = 'lap.button';
@@ -183,65 +225,82 @@ function buildGarminStepDTO(step: WorkoutStep, stepOrder: number) {
   let workoutTargetTypeKey = 'no.target';
   let targetValueOne: number | null = null;
   let targetValueTwo: number | null = null;
+  let zoneNumber: number | null = null;
 
-  if (step.targetHrZone != null && String(step.targetHrZone).trim() !== '') {
-    const hrStr = String(step.targetHrZone).trim();
-    const zoneMatch = hrStr.match(/(?:z|zona)?\s*([1-5])/i);
-    const rangeMatch = hrStr.match(/(\d{2,3})\s*[-–]\s*(\d{2,3})/);
+  const isRecoveryOrWalkOrWarmup =
+    stepTypeId === 4 ||
+    stepTypeId === 1 ||
+    stepTypeId === 2 ||
+    labelLower.includes('cammin') ||
+    labelLower.includes('walk') ||
+    labelLower.includes('recupero') ||
+    labelLower.includes('riposo') ||
+    labelLower.includes('pausa') ||
+    labelLower.includes('riscaldamento') ||
+    labelLower.includes('defaticamento');
 
-    if (zoneMatch && !rangeMatch) {
-      workoutTargetTypeId = 4;
-      workoutTargetTypeKey = 'heart.rate.zone';
-      targetValueOne = parseInt(zoneMatch[1], 10);
-      targetValueTwo = targetValueOne;
-    } else if (rangeMatch) {
-      workoutTargetTypeId = 4;
-      workoutTargetTypeKey = 'heart.rate.zone';
-      targetValueOne = parseInt(rangeMatch[1], 10);
-      targetValueTwo = parseInt(rangeMatch[2], 10);
-    }
-  } else if (step.targetPace != null && String(step.targetPace).trim() !== '') {
-    const paceStr = String(step.targetPace).trim();
-    const paceMatches = Array.from(paceStr.matchAll(/(\d{1,2})\s*:\s*(\d{2})/g));
+  if (!isRecoveryOrWalkOrWarmup) {
+    if (step.targetHrZone != null && String(step.targetHrZone).trim() !== '') {
+      const hrStr = String(step.targetHrZone).trim();
+      const zoneMatch = hrStr.match(/(?:z|zona)?\s*([1-5])/i);
+      const rangeMatch = hrStr.match(/(\d{2,3})\s*[-–]\s*(\d{2,3})/);
 
-    if (paceMatches.length >= 2) {
-      const sec1 = parseInt(paceMatches[0][1], 10) * 60 + parseInt(paceMatches[0][2], 10);
-      const sec2 = parseInt(paceMatches[1][1], 10) * 60 + parseInt(paceMatches[1][2], 10);
-      const fastSec = Math.min(sec1, sec2);
-      const slowSec = Math.max(sec1, sec2);
-      if (fastSec > 0 && slowSec > 0) {
-        workoutTargetTypeId = 6;
-        workoutTargetTypeKey = 'pace.zone';
-        targetValueOne = Number((1000 / slowSec).toFixed(3));
-        targetValueTwo = Number((1000 / fastSec).toFixed(3));
+      if (zoneMatch && !rangeMatch) {
+        workoutTargetTypeId = 4;
+        workoutTargetTypeKey = 'heart.rate.zone';
+        zoneNumber = parseInt(zoneMatch[1], 10);
+        targetValueOne = zoneNumber;
+        targetValueTwo = zoneNumber;
+      } else if (rangeMatch) {
+        workoutTargetTypeId = 4;
+        workoutTargetTypeKey = 'heart.rate.zone';
+        targetValueOne = parseInt(rangeMatch[1], 10);
+        targetValueTwo = parseInt(rangeMatch[2], 10);
+        zoneNumber = null;
       }
-    } else if (paceMatches.length === 1) {
-      const sec = parseInt(paceMatches[0][1], 10) * 60 + parseInt(paceMatches[0][2], 10);
-      if (sec > 0) {
-        const fastSec = sec - 10;
-        const slowSec = sec + 10;
-        workoutTargetTypeId = 6;
-        workoutTargetTypeKey = 'pace.zone';
-        targetValueOne = Number((1000 / slowSec).toFixed(3));
-        targetValueTwo = Number((1000 / fastSec).toFixed(3));
-      }
-    }
-  } else if (step.targetCadence != null && String(step.targetCadence).trim() !== '') {
-    const cadStr = String(step.targetCadence).trim();
-    const rangeMatch = cadStr.match(/(\d{2,3})\s*[-–]\s*(\d{2,3})/);
-    const singleMatch = cadStr.match(/(\d{2,3})/);
+    } else if (step.targetPace != null && String(step.targetPace).trim() !== '') {
+      const paceStr = String(step.targetPace).trim();
+      const paceMatches = Array.from(paceStr.matchAll(/(\d{1,2})\s*:\s*(\d{2})/g));
 
-    if (rangeMatch) {
-      workoutTargetTypeId = 3;
-      workoutTargetTypeKey = 'cadence';
-      targetValueOne = parseInt(rangeMatch[1], 10);
-      targetValueTwo = parseInt(rangeMatch[2], 10);
-    } else if (singleMatch) {
-      const val = parseInt(singleMatch[1], 10);
-      workoutTargetTypeId = 3;
-      workoutTargetTypeKey = 'cadence';
-      targetValueOne = val - 5;
-      targetValueTwo = val + 5;
+      if (paceMatches.length >= 2) {
+        const sec1 = parseInt(paceMatches[0][1], 10) * 60 + parseInt(paceMatches[0][2], 10);
+        const sec2 = parseInt(paceMatches[1][1], 10) * 60 + parseInt(paceMatches[1][2], 10);
+        const fastSec = Math.min(sec1, sec2);
+        const slowSec = Math.max(sec1, sec2);
+        if (fastSec > 0 && slowSec > 0) {
+          workoutTargetTypeId = 6;
+          workoutTargetTypeKey = 'pace.zone';
+          targetValueOne = Number((1000 / slowSec).toFixed(3));
+          targetValueTwo = Number((1000 / fastSec).toFixed(3));
+        }
+      } else if (paceMatches.length === 1) {
+        const sec = parseInt(paceMatches[0][1], 10) * 60 + parseInt(paceMatches[0][2], 10);
+        if (sec > 0) {
+          const fastSec = sec - 10;
+          const slowSec = sec + 10;
+          workoutTargetTypeId = 6;
+          workoutTargetTypeKey = 'pace.zone';
+          targetValueOne = Number((1000 / slowSec).toFixed(3));
+          targetValueTwo = Number((1000 / fastSec).toFixed(3));
+        }
+      }
+    } else if (step.targetCadence != null && String(step.targetCadence).trim() !== '') {
+      const cadStr = String(step.targetCadence).trim();
+      const rangeMatch = cadStr.match(/(\d{2,3})\s*[-–]\s*(\d{2,3})/);
+      const singleMatch = cadStr.match(/(\d{2,3})/);
+
+      if (rangeMatch) {
+        workoutTargetTypeId = 3;
+        workoutTargetTypeKey = 'cadence';
+        targetValueOne = parseInt(rangeMatch[1], 10);
+        targetValueTwo = parseInt(rangeMatch[2], 10);
+      } else if (singleMatch) {
+        const val = parseInt(singleMatch[1], 10);
+        workoutTargetTypeId = 3;
+        workoutTargetTypeKey = 'cadence';
+        targetValueOne = val - 5;
+        targetValueTwo = val + 5;
+      }
     }
   }
 
@@ -266,11 +325,11 @@ function buildGarminStepDTO(step: WorkoutStep, stepOrder: number) {
     },
     targetValueOne,
     targetValueTwo,
+    zoneNumber,
   };
 }
 
 export async function pushWorkoutToGarmin(creds: GarminCredentials, workout: Workout): Promise<{ garminWorkoutId: string }> {
-  const gc = await loginGarminConnect(creds);
   const rawItems: WorkoutStepOrGroup[] = workout.structure?.steps ?? [];
   const garminSteps: unknown[] = [];
   let orderIndex = 1;
@@ -357,8 +416,20 @@ export async function pushWorkoutToGarmin(creds: GarminCredentials, workout: Wor
     ],
   };
 
-  const created = await (gc as unknown as { addWorkout: (w: unknown) => Promise<unknown> }).addWorkout(payload);
-  const garminWorkoutId: string = String((created as Record<string, unknown>).workoutId ?? (created as Record<string, unknown>).id ?? Date.now());
-
-  return { garminWorkoutId };
+  let gc = await loginGarminConnect(creds);
+  try {
+    const created = await (gc as unknown as { addWorkout: (w: unknown) => Promise<unknown> }).addWorkout(payload);
+    const garminWorkoutId: string = String((created as Record<string, unknown>).workoutId ?? (created as Record<string, unknown>).id ?? Date.now());
+    return { garminWorkoutId };
+  } catch (e) {
+    const msg = String((e as Error)?.message || '');
+    if (msg.includes('401') || msg.includes('Unauthorized') || msg.includes('Token')) {
+      garminSessionCache.delete(creds.email);
+      gc = await loginGarminConnect(creds, true);
+      const created = await (gc as unknown as { addWorkout: (w: unknown) => Promise<unknown> }).addWorkout(payload);
+      const garminWorkoutId: string = String((created as Record<string, unknown>).workoutId ?? (created as Record<string, unknown>).id ?? Date.now());
+      return { garminWorkoutId };
+    }
+    throw e;
+  }
 }

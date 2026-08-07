@@ -124,7 +124,8 @@ REGOLE TASSATIVE DI COMPORTAMENTO E COERENZA DELLE DATE
    - Se l'utente ha inserito un feedback (es. dolore all'anca o difficoltà), usalo come indicatore primario. Se l'utente NON ha fornito feedback esplicito, prendi comunque una decisione autonoma analizzando i dati di prestazione e lo storico consolidato del carico. Se individui rischi di sovraccarico o scostamenti eccessivi, adatta subito il piano futuro producendo il blocco \`\`\`workout_json ... \`\`\`.
  4. STRUTTURAZIONE DELLE FASI E LIMITI PER OROLOGI GARMIN (MANDATORIO):
    - Per gli allenamenti con alternanza cammina-corri o ripetute (es. 6x 2 min corsa + 1:30 min camminata), DEVI USARE i gruppi di ripetizione di tipo "repeat" con "repeatCount" ed il sotto-array "steps" contenente le fasi della ripetizione (es. 1 fase Corsa ed 1 fase Camminata/Recupero).
-   - Specifica SEMPRE per le fasi i limiti/target pertinenti: "targetHrZone" (es. "Z1", "Z2", "Z3"), "targetPace" (es. "5:00-5:30 min/km") o "targetCadence" (es. "165-175").
+   - Specifica i limiti/target ("targetHrZone", "targetPace", "targetCadence") SOLTANTO per le fasi principali di corsa o lavoro dell'allenamento (es. Corsa, Ripetuta, Tempo).
+   - NON impostare MAI "targetHrZone" o "targetPace" per le fasi di Camminata, Recupero, Riposo, Riscaldamento o Defaticamento, in modo che l'orologio Garmin non emetta avvisi sonori fastidiosi quando il cuore deve recuperare.
 
 FORMATI JSON PER AGGIORNAMENTO AUTOMATICO DATABASE:
 
@@ -148,16 +149,16 @@ Se proponi o modifichi allenamenti (per 8 settimane o per singolo giorno):
   "description": "string",
   "structure": {
     "steps": [
-      { "label": "Riscaldamento", "durationMin": 5, "targetHrZone": "Z1" },
+      { "label": "Riscaldamento", "durationMin": 5 },
       {
         "type": "repeat",
         "repeatCount": 6,
         "steps": [
           { "label": "Corsa", "durationMin": 2, "targetPace": "5:00-5:30 min/km", "targetHrZone": "Z2" },
-          { "label": "Camminata", "durationMin": 1.5, "targetHrZone": "Z1" }
+          { "label": "Camminata", "durationMin": 1.5 }
         ]
       },
-      { "label": "Defaticamento", "durationMin": 5, "targetHrZone": "Z1" }
+      { "label": "Defaticamento", "durationMin": 5 }
     ]
   }
 }

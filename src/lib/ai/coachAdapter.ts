@@ -5,6 +5,7 @@ import {
   loadRecentGarminActivities,
   loadDecryptedAiSettings,
   mapWorkoutRow,
+  sanitizeWorkoutStructure,
 } from '@/lib/server/userContext';
 import { buildAssistantSystemPrompt } from '@/lib/ai/systemPrompt';
 import { callLlm, extractWorkoutJsonBlocks, stripJsonBlocks } from '@/lib/ai/providers';
@@ -165,7 +166,7 @@ ISTRUZIONI PER IL COACH:
             type: item.type,
             title: item.title,
             description: item.description ?? '',
-            structure: item.structure ?? { steps: [] },
+            structure: sanitizeWorkoutStructure(item.structure ?? { steps: [] }),
             source: 'ai',
             status: 'planned',
           };

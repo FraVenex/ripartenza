@@ -53,13 +53,6 @@ export function WorkoutActions({ workout }: { workout: Workout }) {
           Discuti o modifica con il Coach 💬
         </button>
         <button
-          onClick={() => updateWorkout({ status: 'completed' })}
-          className="rounded-pill bg-recovery px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
-          disabled={saving}
-        >
-          Segna come completato
-        </button>
-        <button
           onClick={() => updateWorkout({ status: 'skipped' })}
           className="rounded-pill border border-line px-4 py-2 text-sm font-semibold text-ink-soft disabled:opacity-60"
           disabled={saving}

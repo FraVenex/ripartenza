@@ -6,9 +6,6 @@ import type { Workout } from '@/lib/types';
 
 export function WorkoutActions({ workout }: { workout: Workout }) {
   const router = useRouter();
-  const [rpe, setRpe] = useState<number | ''>(workout.rpe ?? '');
-  const [pain, setPain] = useState<number | ''>(workout.painScore ?? 0);
-  const [painLocation, setPainLocation] = useState(workout.painLocation ?? '');
   const [saving, setSaving] = useState(false);
   const [garminMsg, setGarminMsg] = useState<string | null>(null);
   const [sendingGarmin, setSendingGarmin] = useState(false);
@@ -46,82 +43,62 @@ export function WorkoutActions({ workout }: { workout: Workout }) {
       }
       return `${item.label}${item.durationMin ? ` ${item.durationMin}m` : ''}${item.distanceKm ? ` ${item.distanceKm}km` : ''}`;
     }).join(', ') ?? '';
-    const msg = `Vorrei discutere e modificare l'allenamento "${workout.title}" del ${workout.date} (${workout.type}${stepsStr ? `: ${stepsStr}` : ''}). Vorrei cambiare...`;
+    const msg = `Vorrei discutere e modificare l'allenamento "${workout.title}" (${workout.type}${stepsStr ? `: ${stepsStr}` : ''}).`;
     router.push(`/coach?initial_message=${encodeURIComponent(msg)}`);
   }
 
   return (
-    <div className="card flex flex-col gap-4 p-5">
-      <div className="flex flex-wrap items-center gap-2">
-        <button
-          onClick={handleDiscussWithCoach}
-          className="rounded-pill bg-track px-4 py-2 text-sm font-semibold text-white"
-        >
-          Discuti o modifica con il Coach 💬
-        </button>
-        <button
-          onClick={() => updateWorkout({ status: 'skipped' })}
-          className="rounded-pill border border-line px-4 py-2 text-sm font-semibold text-ink-soft disabled:opacity-60"
-          disabled={saving}
-        >
-          Salta
-        </button>
-        <button
-          onClick={sendToGarmin}
-          className="rounded-pill border border-zone px-4 py-2 text-sm font-semibold text-zone disabled:opacity-60"
-          disabled={sendingGarmin}
-        >
-          {sendingGarmin ? 'Invio…' : 'Invia a Garmin'}
-        </button>
-      </div>
-      {garminMsg && <p className="text-sm text-ink-soft">{garminMsg}</p>}
-
-      <div className="border-t border-line pt-4">
-        <p className="mb-2 font-display text-lg leading-none">Come è andata?</p>
-        <div className="grid grid-cols-2 gap-3">
-          <label className="text-sm font-medium">
-            Sforzo percepito (RPE 1-10)
-            <input
-              type="number"
-              min={1}
-              max={10}
-              value={rpe}
-              onChange={(e) => setRpe(e.target.value ? Number(e.target.value) : '')}
-              className="mt-1 w-full rounded-md border border-line bg-surface px-3 py-2 text-sm tabular"
-            />
-          </label>
-          <label className="text-sm font-medium">
-            Dolore (0-10)
-            <input
-              type="number"
-              min={0}
-              max={10}
-              value={pain}
-              onChange={(e) => setPain(e.target.value ? Number(e.target.value) : '')}
-              className="mt-1 w-full rounded-md border border-line bg-surface px-3 py-2 text-sm tabular"
-            />
-          </label>
+    <div className="card flex flex-col gap-3 p-4 shadow-card">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={handleDiscussWithCoach}
+            className="ios-btn-active rounded-pill bg-track px-4 py-2 text-xs font-bold text-white shadow-sm hover:opacity-95"
+          >
+            Discuti con il Coach 💬
+          </button>
+          <button
+            onClick={sendToGarmin}
+            className="ios-btn-active rounded-pill border border-zone bg-zone-soft/30 px-3.5 py-2 text-xs font-semibold text-zone hover:bg-zone-soft disabled:opacity-60"
+            disabled={sendingGarmin}
+          >
+            {sendingGarmin ? 'Invio in corso…' : 'Invia all\'orologio Garmin ⌚'}
+          </button>
         </div>
-        <label className="mt-3 block text-sm font-medium">
-          Dove fa male (se presente)
-          <input
-            value={painLocation}
-            onChange={(e) => setPainLocation(e.target.value)}
-            placeholder="es. anca destra, tendine d'Achille sinistro…"
-            className="mt-1 w-full rounded-md border border-line bg-surface px-3 py-2 text-sm"
-          />
-        </label>
-        <button
-          onClick={() => updateWorkout({ rpe: rpe || null, painScore: pain === '' ? null : pain, painLocation: painLocation || null })}
-          disabled={saving}
-          className="mt-3 rounded-pill bg-ink px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
-        >
-          {saving ? 'Salvo…' : 'Salva feedback'}
-        </button>
-        <p className="mt-2 text-xs text-ink-faint">
-          Questo feedback viene letto dal coach AI alla prossima conversazione per adattare il carico.
-        </p>
+
+        <div className="flex items-center gap-2">
+          {workout.status === 'planned' ? (
+            <button
+              onClick={() => updateWorkout({ status: 'skipped' })}
+              className="rounded-pill border border-line px-3 py-1.5 text-xs font-medium text-ink-soft hover:bg-surfaceSunken disabled:opacity-60"
+              disabled={saving}
+            >
+              Segna come saltato
+            </button>
+          ) : (
+            <button
+              onClick={() =>
+                updateWorkout({
+                  status: 'planned',
+                  completed_activity: null,
+                  rpe: null,
+                  pain_score: null,
+                  pain_location: null,
+                  notes: null,
+                  coach_feedback: null,
+                })
+              }
+              className="rounded-pill border border-track/40 bg-track-soft/40 px-3 py-1.5 text-xs font-bold text-track-dark hover:bg-track-soft disabled:opacity-60"
+              disabled={saving}
+              title="Ripristina questa sessione (o test) nello stato da svolgere"
+            >
+              Ripristina come Da svolgere 🔄
+            </button>
+          )}
+        </div>
       </div>
+
+      {garminMsg && <p className="text-xs font-medium text-track">{garminMsg}</p>}
     </div>
   );
 }

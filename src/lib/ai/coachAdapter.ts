@@ -172,9 +172,17 @@ ISTRUZIONI PER IL COACH:
           };
 
           if (existingWorkout?.id) {
-            await supabase.from('workouts').update(workoutPayload).eq('id', existingWorkout.id);
+            const { error: updErr } = await supabase.from('workouts').update(workoutPayload).eq('id', existingWorkout.id);
+            if (updErr && item.type === 'test') {
+              const fallbackPayload = { ...workoutPayload, type: 'easy' };
+              await supabase.from('workouts').update(fallbackPayload).eq('id', existingWorkout.id);
+            }
           } else {
-            await supabase.from('workouts').insert(workoutPayload);
+            const { error: insErr } = await supabase.from('workouts').insert(workoutPayload);
+            if (insErr && item.type === 'test') {
+              const fallbackPayload = { ...workoutPayload, type: 'easy' };
+              await supabase.from('workouts').insert(fallbackPayload);
+            }
           }
         }
       }

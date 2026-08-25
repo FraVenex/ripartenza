@@ -6,7 +6,8 @@ export type WorkoutType =
   | 'walk_run'
   | 'strength'
   | 'mobility'
-  | 'rest';
+  | 'rest'
+  | 'test';
 
 export const WORKOUT_TYPE_LABEL: Record<WorkoutType, string> = {
   easy: 'Facile',
@@ -17,6 +18,7 @@ export const WORKOUT_TYPE_LABEL: Record<WorkoutType, string> = {
   strength: 'Rinforzo',
   mobility: 'Mobilità',
   rest: 'Riposo',
+  test: 'Test Valutazione',
 };
 
 export const WORKOUT_TYPE_COLOR: Record<WorkoutType, 'track' | 'recovery' | 'zone' | 'signal'> = {
@@ -28,6 +30,7 @@ export const WORKOUT_TYPE_COLOR: Record<WorkoutType, 'track' | 'recovery' | 'zon
   strength: 'recovery',
   mobility: 'recovery',
   rest: 'zone',
+  test: 'signal',
 };
 
 export type WorkoutStatus = 'planned' | 'completed' | 'skipped' | 'modified';
@@ -57,11 +60,38 @@ export interface WorkoutStructure {
   totalDistanceKm?: number;
 }
 
+export interface ActivityWeatherSummary {
+  temperatureC: number;
+  apparentTemperatureC?: number;
+  conditionDescription: string;
+  humidityPercent?: number;
+  windSpeedKmh?: number;
+  precipitationMm?: number;
+  weatherCode?: number;
+}
+
+export interface CompletedActivitySummary {
+  garminActivityId?: string;
+  durationS?: number;
+  distanceM?: number;
+  avgHrBpm?: number;
+  maxHrBpm?: number;
+  avgPaceMinPerKm?: number;
+  elevationGainM?: number;
+  elevationLossM?: number;
+  avgCadence?: number;
+  maxCadence?: number;
+  calories?: number;
+  weather?: ActivityWeatherSummary | null;
+}
+
 export interface Workout {
   id: string;
   planId: string | null;
   userId: string;
   date: string;
+  weekNumber?: number | null;
+  sessionOrder?: number | null;
   type: WorkoutType;
   title: string;
   description: string;
@@ -73,18 +103,9 @@ export interface Workout {
   painScore?: number | null;
   painLocation?: string | null;
   notes?: string | null;
+  coachFeedback?: string | null;
   completedActivity?: CompletedActivitySummary | null;
   createdAt: string;
-}
-
-export interface CompletedActivitySummary {
-  garminActivityId?: string;
-  durationS?: number;
-  distanceM?: number;
-  avgHrBpm?: number;
-  maxHrBpm?: number;
-  avgPaceMinPerKm?: number;
-  elevationGainM?: number;
 }
 
 export interface TrainingPlan {
@@ -93,6 +114,8 @@ export interface TrainingPlan {
   goal: string;
   startDate: string;
   targetEventDate: string | null;
+  weeksCount?: number;
+  currentWeek?: number;
   status: 'active' | 'completed' | 'archived';
   generatedBy: 'ai' | 'manual';
   createdAt: string;

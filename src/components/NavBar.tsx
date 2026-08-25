@@ -7,6 +7,8 @@ import clsx from 'clsx';
 const ITEMS = [
   { href: '/', label: 'Piano', icon: PlanIcon },
   { href: '/coach', label: 'Coach', icon: CoachIcon },
+  { href: '/progress', label: 'Progressi', icon: ProgressIcon },
+  { href: '/archive', label: 'Archivio', icon: ArchiveIcon },
   { href: '/profile', label: 'Profilo', icon: ProfileIcon },
   { href: '/settings', label: 'Impostazioni', icon: SettingsIcon },
 ];
@@ -41,7 +43,7 @@ export function NavBar() {
         </nav>
       </aside>
 
-      <nav className="fixed bottom-4 inset-x-4 z-40 mx-auto max-w-sm rounded-full liquid-glass-dock p-2 md:hidden">
+      <nav className="fixed bottom-4 inset-x-3 z-40 mx-auto max-w-md rounded-full liquid-glass-dock p-1.5 md:hidden shadow-lg">
         <div className="flex items-center justify-around">
           {ITEMS.map((item) => {
             const active = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
@@ -50,12 +52,12 @@ export function NavBar() {
                 key={item.href}
                 href={item.href}
                 className={clsx(
-                  'ios-btn-active flex flex-1 flex-col items-center gap-1 py-1 text-[10px] font-medium transition-colors',
-                  active ? 'font-semibold text-track' : 'text-ink-faint hover:text-ink-soft'
+                  'ios-btn-active flex flex-1 flex-col items-center gap-0.5 py-1 text-[9px] font-medium transition-colors',
+                  active ? 'font-bold text-track' : 'text-ink-faint hover:text-ink-soft'
                 )}
               >
-                <item.icon className={clsx('h-5 w-5 transition-transform', active && 'scale-110')} active={active} />
-                <span>{item.label}</span>
+                <item.icon className={clsx('h-4 w-4 transition-transform', active && 'scale-110')} active={active} />
+                <span className="truncate max-w-[54px]">{item.label}</span>
               </Link>
             );
           })}
@@ -91,6 +93,25 @@ function CoachIcon({ className, active }: { className?: string; active?: boolean
   );
 }
 
+function ProgressIcon({ className, active }: { className?: string; active?: boolean }) {
+  return (
+    <svg {...iconProps(className)}>
+      <path d="M3 3v18h18" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M19 9l-5 5-4-4-3 3" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function ArchiveIcon({ className, active }: { className?: string; active?: boolean }) {
+  return (
+    <svg {...iconProps(className)}>
+      <rect x="3" y="4" width="18" height="4" rx="1" fill={active ? 'currentColor' : 'none'} fillOpacity={active ? 0.15 : 0} />
+      <path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M10 12h4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 function ProfileIcon({ className, active }: { className?: string; active?: boolean }) {
   return (
     <svg {...iconProps(className)}>
@@ -111,5 +132,3 @@ function SettingsIcon({ className, active }: { className?: string; active?: bool
     </svg>
   );
 }
-
-

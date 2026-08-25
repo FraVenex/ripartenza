@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { decryptSecret } from '@/lib/crypto';
-import type { MedicalProfile, Workout, WorkoutStructure, WorkoutStep, WorkoutRepeatGroup, AiProvider } from '@/lib/types';
+import { DEFAULT_AI_MODEL } from '@/lib/ai/providers';
+import type { MedicalProfile, Workout, WorkoutStructure, WorkoutStep, WorkoutRepeatGroup, AiProvider, ActivityWeatherSummary } from '@/lib/types';
 import type { GarminCredentials } from '@/lib/garmin/client';
 
 export async function requireUser(supabase: SupabaseClient) {
@@ -32,8 +33,8 @@ export async function loadMedicalProfile(supabase: SupabaseClient, userId: strin
 export async function loadRecentWorkouts(
   supabase: SupabaseClient,
   userId: string,
-  pastDays = 30,
-  futureDays = 90
+  pastDays = 60,
+  futureDays = 120
 ): Promise<Workout[]> {
   const past = new Date();
   past.setDate(past.getDate() - pastDays);
@@ -60,6 +61,10 @@ export interface GarminActivityLogItem {
   avgHrBpm: number | null;
   maxHrBpm: number | null;
   avgPaceMinPerKm: number | null;
+  elevationGainM: number | null;
+  elevationLossM: number | null;
+  weather?: ActivityWeatherSummary | null;
+  coachReviewed?: boolean;
 }
 
 export async function loadRecentGarminActivities(
@@ -84,6 +89,11 @@ export async function loadRecentGarminActivities(
   return data.map((row) => {
     const rawObj = (row.raw ?? {}) as Record<string, any>;
     const maxHr = (row.max_hr_bpm as number) ?? rawObj.maxHR ?? rawObj.maxHeartRateInBeatsPerMinute ?? rawObj.summary?.maxHeartRateInBeatsPerMinute ?? null;
+    const elevGain = (row.elevation_gain_m as number) ?? rawObj.elevationGain ?? rawObj.elevationGainInMeters ?? null;
+    const elevLoss = (row.elevation_loss_m as number) ?? rawObj.elevationLoss ?? rawObj.elevationLossInMeters ?? null;
+    const weather = (row.weather_data as ActivityWeatherSummary) ?? rawObj.weather_info ?? null;
+    const coachReviewed = (row.coach_reviewed as boolean) ?? Boolean(rawObj.coach_reviewed);
+
     return {
       id: row.id as string,
       garminActivityId: row.garmin_activity_id as string,
@@ -94,6 +104,10 @@ export async function loadRecentGarminActivities(
       avgHrBpm: (row.avg_hr_bpm as number) ?? null,
       maxHrBpm: maxHr,
       avgPaceMinPerKm: (row.avg_pace_min_per_km as number) ?? null,
+      elevationGainM: elevGain,
+      elevationLossM: elevLoss,
+      weather,
+      coachReviewed,
     };
   });
 }
@@ -149,6 +163,8 @@ export function mapWorkoutRow(row: Record<string, unknown>): Workout {
     planId: (row.plan_id as string) ?? null,
     userId: row.user_id as string,
     date: row.date as string,
+    weekNumber: (row.week_number as number) ?? null,
+    sessionOrder: (row.session_order as number) ?? null,
     type: row.type as Workout['type'],
     title: row.title as string,
     description: (row.description as string) ?? '',
@@ -160,6 +176,7 @@ export function mapWorkoutRow(row: Record<string, unknown>): Workout {
     painScore: (row.pain_score as number) ?? null,
     painLocation: (row.pain_location as string) ?? null,
     notes: (row.notes as string) ?? null,
+    coachFeedback: (row.coach_feedback as string) ?? null,
     completedActivity: (row.completed_activity as Workout['completedActivity']) ?? null,
     createdAt: row.created_at as string,
   };
@@ -180,8 +197,8 @@ export async function loadDecryptedAiSettings(supabase: SupabaseClient, userId: 
     );
   }
   return {
-    provider: data.ai_provider,
-    model: data.ai_model,
+    provider: data.ai_provider || 'google',
+    model: data.ai_model || DEFAULT_AI_MODEL,
     baseUrl: data.ai_base_url,
     apiKey: decryptSecret(data.ai_api_key_encrypted),
   };

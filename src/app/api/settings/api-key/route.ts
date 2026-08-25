@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { requireUser } from '@/lib/server/userContext';
 import { encryptSecret, lastFour } from '@/lib/crypto';
+import { DEFAULT_AI_MODEL } from '@/lib/ai/providers';
 import type { UserSettings } from '@/lib/types';
 
 export const runtime = 'nodejs';
@@ -20,7 +21,7 @@ export async function GET() {
   const settings: UserSettings = {
     userId: user.id,
     aiProvider: 'google',
-    aiModel: data?.ai_model ?? 'gemini-2.0-flash',
+    aiModel: DEFAULT_AI_MODEL,
     aiBaseUrl: null,
     hasApiKey: !!data?.ai_api_key_encrypted,
     apiKeyLastFour: data?.ai_api_key_last_four ?? null,
@@ -40,15 +41,14 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json().catch(() => null);
-  const { model, apiKey } = body ?? {};
+  const { apiKey } = body ?? {};
 
-  const cleanModel = String(model ?? 'gemini-2.0-flash').trim();
   const cleanApiKey = apiKey ? String(apiKey).trim() : null;
 
   const update: Record<string, unknown> = {
     user_id: user.id,
     ai_provider: 'google',
-    ai_model: cleanModel,
+    ai_model: DEFAULT_AI_MODEL,
     ai_base_url: null,
     updated_at: new Date().toISOString(),
   };

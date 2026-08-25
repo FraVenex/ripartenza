@@ -7,7 +7,7 @@ import type { WorkoutType } from '@/lib/types';
 
 export const runtime = 'nodejs';
 
-const VALID_TYPES: WorkoutType[] = ['easy', 'long', 'tempo', 'intervals', 'walk_run', 'strength', 'mobility', 'rest'];
+const VALID_TYPES: WorkoutType[] = ['easy', 'long', 'tempo', 'intervals', 'walk_run', 'strength', 'mobility', 'rest', 'test'];
 
 export async function POST(req: NextRequest) {
   const supabase = createServerSupabaseClient();
@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
   const goal: string | undefined = body?.goal;
   const startDate: string | undefined = body?.startDate;
-  const weeks: number = Math.min(Math.max(Number(body?.weeks) || 4, 1), 12);
+  const weeks: number = 6;
   const daysPerWeek: number = Math.min(Math.max(Number(body?.daysPerWeek) || 3, 2), 7);
 
   if (!goal || !startDate) {
@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
   const medicalProfile = await loadMedicalProfile(supabase, user.id);
   const systemPrompt = buildAssistantSystemPrompt({ medicalProfile, recentWorkouts: [], goal });
 
-  const instruction = `Crea un piano di allenamento di ${weeks} settimane, a partire dal ${startDate}, con circa ${daysPerWeek} sessioni a settimana (le altre giornate sono riposo attivo o completo). Rispetta rigorosamente il protocollo graduato pertinente al profilo medico dell'utente riportato sopra: se l'utente ha una condizione o un rientro da pausa lunga, NON iniziare direttamente con corsa continua se il protocollo prevede prima una fase di cammina-corri o di rinforzo. Restituisci l'intero piano come un array JSON nel blocco \`\`\`workout_json, seguendo lo schema descritto, con una voce per ogni sessione di allenamento (comprese le giornate di rinforzo/mobilità se previste dal protocollo). Prima del blocco JSON, scrivi una brevissima introduzione (3-4 frasi) che spiega la logica del piano e perché rispetta il protocollo di rientro.`;
+  const instruction = `Crea un piano di allenamento di ${weeks} settimane (con test di valutazione finale previsto alla 6ª settimana), a partire dal ${startDate}, con circa ${daysPerWeek} sessioni a settimana. Rispetta rigorosamente il protocollo graduato del profilo medico dell'atleta e assicurati che le sessioni siano sequenziali e flessibili. Restituisci l'intero piano come array JSON nel blocco \`\`\`workout_json. Prima del blocco JSON, scrivi una breve introduzione esplicativa.`;
 
   let result;
   try {
@@ -76,17 +76,21 @@ export async function POST(req: NextRequest) {
 
   const rows = proposed
     .filter((w) => VALID_TYPES.includes(w.type as WorkoutType) && typeof w.date === 'string')
-    .map((w) => ({
-      plan_id: plan.id,
-      user_id: user.id,
-      date: w.date,
-      type: w.type,
-      title: w.title ?? 'Allenamento',
-      description: w.description ?? '',
-      structure: w.structure ?? { steps: [] },
-      source: 'ai',
-      status: 'planned',
-    }));
+    .map((w, index) => {
+      const weekNum = Math.floor(index / daysPerWeek) + 1;
+      const sessOrder = (index % daysPerWeek) + 1;
+      return {
+        plan_id: plan.id,
+        user_id: user.id,
+        date: w.date,
+        type: w.type,
+        title: w.title ?? 'Allenamento',
+        description: w.description ?? '',
+        structure: w.structure ?? { steps: [] },
+        source: 'ai',
+        status: 'planned',
+      };
+    });
 
   if (rows.length) {
     const { error: workoutsError } = await supabase.from('workouts').insert(rows);

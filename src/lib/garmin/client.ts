@@ -56,19 +56,64 @@ export interface GarminActivityItem {
   activityId: string;
   activityName: string;
   startTimeLocal: string;
+  startTimeGMT?: string;
   distance: number;
   duration: number;
   averageSpeed: number;
+  maxSpeed?: number;
   averageHR: number;
   maxHR?: number;
   elevationGain?: number;
+  elevationLoss?: number;
+  minElevation?: number;
+  maxElevation?: number;
+  averageRunningCadenceInStepsPerMinute?: number;
+  maxRunningCadenceInStepsPerMinute?: number;
+  calories?: number;
+  startLatitude?: number;
+  startLongitude?: number;
+  locationName?: string;
   activityType: { typeKey: string };
+  [key: string]: unknown;
 }
 
-export function isRunningActivity(typeKey?: string): boolean {
-  if (!typeKey) return false;
-  const key = typeKey.toLowerCase();
-  return key.includes('running') || key.includes('run');
+export function isRunningActivity(activityOrType?: unknown): boolean {
+  if (!activityOrType) return false;
+  let typeStr = '';
+  let nameStr = '';
+  if (typeof activityOrType === 'string') {
+    typeStr = activityOrType.toLowerCase();
+  } else if (typeof activityOrType === 'object' && activityOrType !== null) {
+    const act = activityOrType as Record<string, unknown>;
+    const nestedType = act.activityType as Record<string, unknown> | string | undefined;
+    const nestedDTO = act.activityTypeDTO as Record<string, unknown> | undefined;
+    const rawKey =
+      (typeof nestedType === 'object' && nestedType?.typeKey) ||
+      (typeof nestedDTO === 'object' && nestedDTO?.typeKey) ||
+      act.sportType ||
+      act.typeKey ||
+      (typeof nestedType === 'string' ? nestedType : '') ||
+      '';
+    typeStr = String(rawKey).toLowerCase();
+    nameStr = String(act.activityName || '').toLowerCase();
+  }
+  return (
+    typeStr.includes('running') ||
+    typeStr.includes('run') ||
+    typeStr.includes('corsa') ||
+    typeStr.includes('trail') ||
+    typeStr.includes('treadmill') ||
+    typeStr.includes('track') ||
+    typeStr.includes('walk') ||
+    typeStr.includes('cammin') ||
+    typeStr.includes('hiking') ||
+    typeStr.includes('cardio') ||
+    nameStr.includes('corsa') ||
+    nameStr.includes('run') ||
+    nameStr.includes('allenamento') ||
+    nameStr.includes('test') ||
+    nameStr.includes('cammin')
+  );
 }
 
 export async function getGarminActivities(creds: GarminCredentials, limit = 30): Promise<GarminActivityItem[]> {

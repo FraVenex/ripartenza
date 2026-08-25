@@ -3,6 +3,7 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { requireUser } from '@/lib/server/userContext';
 import { encryptSecret } from '@/lib/crypto';
 import { loginGarminConnect, getGarminActivities, isRunningActivity } from '@/lib/garmin/client';
+import { fetchWeatherForActivity } from '@/lib/weather/openMeteo';
 
 export const runtime = 'nodejs';
 
@@ -92,11 +93,21 @@ export async function POST(req: NextRequest) {
     for (const act of runningActivities) {
       const activityId = String(act.activityId);
       const activityDate = act.startTimeLocal ? act.startTimeLocal.substring(0, 10) : new Date().toISOString().substring(0, 10);
+      const timeLocal = act.startTimeLocal ? act.startTimeLocal.substring(11, 19) : undefined;
       const distanceM = act.distance ?? null;
       const durationS = act.duration ?? null;
       const avgHr = act.averageHR ?? null;
+      const maxHr = act.maxHR ?? null;
       const avgSpeedMS = act.averageSpeed ?? 0;
       const avgPaceMinKm = avgSpeedMS > 0 ? (1000 / avgSpeedMS) / 60 : null;
+
+      let weatherData = null;
+      const lat = (act.startLatitude as number) ?? (act.latitude as number) ?? null;
+      const lon = (act.startLongitude as number) ?? (act.longitude as number) ?? null;
+
+      if (lat != null && lon != null && initialSyncedCount < 10) {
+        weatherData = await fetchWeatherForActivity(lat, lon, activityDate, timeLocal);
+      }
 
       await supabase.from('activity_log').upsert(
         {
@@ -107,8 +118,13 @@ export async function POST(req: NextRequest) {
           distance_m: distanceM,
           duration_s: durationS,
           avg_hr_bpm: avgHr,
+          max_hr_bpm: maxHr,
           avg_pace_min_per_km: avgPaceMinKm,
-          raw: act,
+          raw: {
+            ...act,
+            weather_info: weatherData,
+            coach_reviewed: true,
+          },
         },
         { onConflict: 'user_id,garmin_activity_id' }
       );

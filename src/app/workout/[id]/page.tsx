@@ -15,11 +15,15 @@ export default async function WorkoutDetailPage({ params }: { params: { id: stri
   if (error || !row) notFound();
 
   const workout = mapWorkoutRow(row);
-  const dateLabel = new Date(workout.date + 'T00:00:00').toLocaleDateString('it-IT', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-  });
+  const dateLabel = workout.date
+    ? new Date(workout.date + 'T00:00:00').toLocaleDateString('it-IT', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+      })
+    : '';
+
+  const completed = workout.completedActivity;
 
   return (
     <div className="flex flex-col gap-5 pt-2">
@@ -28,7 +32,7 @@ export default async function WorkoutDetailPage({ params }: { params: { id: stri
           <WorkoutTypeBadge type={workout.type} />
         </div>
         <h1 className="font-display text-3xl font-extrabold tracking-tight text-ink">{workout.title}</h1>
-        <p className="font-stat text-xs font-semibold capitalize text-ink-faint">{dateLabel}</p>
+        {dateLabel && <p className="font-stat text-xs font-semibold capitalize text-ink-faint">{dateLabel}</p>}
       </header>
 
       {workout.description && <p className="text-xs leading-relaxed text-ink-soft">{workout.description}</p>}
@@ -88,15 +92,65 @@ export default async function WorkoutDetailPage({ params }: { params: { id: stri
         </section>
       )}
 
-      {workout.completedActivity && (
-        <section className="card p-4 shadow-card">
-          <p className="mb-2 font-display text-base font-bold text-ink">Svolto (Garmin)</p>
+      {completed && (
+        <section className="card p-4 shadow-card flex flex-col gap-3">
+          <p className="font-display text-base font-bold text-ink">Dati Svolti (Garmin)</p>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 font-stat text-xs tabular">
-            {workout.completedActivity.distanceM && <p className="rounded-ios bg-bg p-2 text-center font-semibold text-ink">{(workout.completedActivity.distanceM / 1000).toFixed(2)} km</p>}
-            {workout.completedActivity.durationS && <p className="rounded-ios bg-bg p-2 text-center font-semibold text-ink">{Math.round(workout.completedActivity.durationS / 60)} min</p>}
-            {workout.completedActivity.avgHrBpm && <p className="rounded-ios bg-bg p-2 text-center font-semibold text-ink">FC Med: {Math.round(workout.completedActivity.avgHrBpm)} bpm</p>}
-            {workout.completedActivity.maxHrBpm && <p className="rounded-ios bg-bg p-2 text-center font-semibold text-ink">FC Max: {Math.round(workout.completedActivity.maxHrBpm)} bpm</p>}
+            {completed.distanceM && (
+              <div className="rounded-ios bg-bg p-2 text-center">
+                <p className="text-[10px] text-ink-faint uppercase font-bold">Distanza</p>
+                <p className="font-bold text-ink text-sm">{(completed.distanceM / 1000).toFixed(2)} km</p>
+              </div>
+            )}
+            {completed.durationS && (
+              <div className="rounded-ios bg-bg p-2 text-center">
+                <p className="text-[10px] text-ink-faint uppercase font-bold">Durata</p>
+                <p className="font-bold text-ink text-sm">{Math.round(completed.durationS / 60)} min</p>
+              </div>
+            )}
+            {completed.avgHrBpm && (
+              <div className="rounded-ios bg-bg p-2 text-center">
+                <p className="text-[10px] text-ink-faint uppercase font-bold">FC Media / Max</p>
+                <p className="font-bold text-ink text-sm">
+                  {Math.round(completed.avgHrBpm)} {completed.maxHrBpm ? `/ ${Math.round(completed.maxHrBpm)}` : ''} bpm
+                </p>
+              </div>
+            )}
+            {completed.avgPaceMinPerKm && (
+              <div className="rounded-ios bg-bg p-2 text-center">
+                <p className="text-[10px] text-ink-faint uppercase font-bold">Passo Medio</p>
+                <p className="font-bold text-ink text-sm">
+                  {Math.floor(completed.avgPaceMinPerKm)}'{Math.round((completed.avgPaceMinPerKm % 1) * 60).toString().padStart(2, '0')}"/km
+                </p>
+              </div>
+            )}
           </div>
+
+          {(completed.elevationGainM != null || completed.weather) && (
+            <div className="flex flex-wrap items-center gap-3 pt-1 text-xs text-ink-soft">
+              {completed.elevationGainM != null && (
+                <span>⛰️ Dislivello: <strong>+{completed.elevationGainM} m</strong></span>
+              )}
+              {completed.weather && (
+                <span>🌤️ Meteo: <strong>{completed.weather.temperatureC}°C</strong>, {completed.weather.conditionDescription}</span>
+              )}
+            </div>
+          )}
+
+          {workout.rpe != null && (
+            <div className="mt-1 border-t border-line/60 pt-2 text-xs text-ink-soft">
+              <span className="font-semibold text-ink">Feedback registrato:</span> Sforzo RPE {workout.rpe}/10
+              {workout.painScore != null && ` · Dolore ${workout.painScore}/10${workout.painLocation ? ` (${workout.painLocation})` : ''}`}
+              {workout.notes && ` · "${workout.notes}"`}
+            </div>
+          )}
+
+          {workout.coachFeedback && (
+            <div className="rounded-ios bg-track-soft/40 p-3 text-xs text-ink leading-relaxed">
+              <p className="font-bold text-track-dark mb-1">Feedback del Coach:</p>
+              <p>{workout.coachFeedback}</p>
+            </div>
+          )}
         </section>
       )}
 
@@ -104,4 +158,3 @@ export default async function WorkoutDetailPage({ params }: { params: { id: stri
     </div>
   );
 }
-

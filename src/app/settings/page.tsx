@@ -6,14 +6,6 @@ import type { UserSettings } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 
-const GEMINI_MODELS: { value: string; label: string; hint: string }[] = [
-  { value: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash (Consigliato)', hint: 'Modello ad alte prestazioni e bassa latenza' },
-  { value: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro', hint: 'Modello avanzato per ragionamenti complessi' },
-  { value: 'gemini-1.5-flash', label: 'Gemini 1.5 Flash', hint: 'Modello rapido e stabile' },
-  { value: 'gemini-1.5-pro', label: 'Gemini 1.5 Pro', hint: 'Modello ad ampio contesto' },
-  { value: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash', hint: 'Versione Flash serie 2.0' },
-];
-
 interface GarminStatusInfo {
   connected: boolean;
   totalActivities?: number;
@@ -24,9 +16,6 @@ interface GarminStatusInfo {
 function SettingsForm() {
   const searchParams = useSearchParams();
   const [settings, setSettings] = useState<UserSettings | null>(null);
-  const [model, setModel] = useState('gemini-2.5-flash');
-  const [customModel, setCustomModel] = useState('');
-  const [isCustomModel, setIsCustomModel] = useState(false);
   const [apiKey, setApiKey] = useState('');
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState<string | null>(null);
@@ -51,16 +40,6 @@ function SettingsForm() {
       .then((r) => r.json())
       .then((data) => {
         setSettings(data.settings);
-        if (data.settings?.aiModel) {
-          const current = data.settings.aiModel;
-          if (GEMINI_MODELS.some((m) => m.value === current)) {
-            setModel(current);
-            setIsCustomModel(false);
-          } else {
-            setIsCustomModel(true);
-            setCustomModel(current);
-          }
-        }
       });
 
     loadGarminStatus();
@@ -70,23 +49,19 @@ function SettingsForm() {
     e.preventDefault();
     setSaving(true);
     setSaveMsg(null);
-    const targetModel = isCustomModel ? customModel.trim() : model;
-
-    if (!targetModel) {
-      setSaving(false);
-      setSaveMsg('Inserisci un nome di modello valido.');
-      return;
-    }
 
     const res = await fetch('/api/settings/api-key', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ provider: 'google', model: targetModel, apiKey: apiKey || undefined }),
+      body: JSON.stringify({ apiKey: apiKey || undefined }),
     });
     setSaving(false);
     if (res.ok) {
       setSaveMsg('Impostazioni Google Gemini salvate ✓');
       setApiKey('');
+      fetch('/api/settings/api-key')
+        .then((r) => r.json())
+        .then((data) => setSettings(data.settings));
     } else {
       const data = await res.json();
       setSaveMsg(data.error ?? 'Errore nel salvataggio.');
@@ -141,8 +116,6 @@ function SettingsForm() {
     }
   }
 
-  const selectedModel = GEMINI_MODELS.find((m) => m.value === model);
-
   return (
     <div className="flex flex-col gap-6 pt-2">
       <header className="flex flex-col gap-0.5">
@@ -158,45 +131,12 @@ function SettingsForm() {
           </p>
         </div>
 
+        <div className="flex items-center justify-between rounded-ios bg-bg p-3 text-xs">
+          <span className="text-ink-soft">Modello attivo del Coach:</span>
+          <span className="font-semibold text-ink">Gemini 3.7 Flash</span>
+        </div>
+
         <form onSubmit={handleSaveAi} className="flex flex-col gap-3">
-          <label className="flex flex-col gap-1 text-xs font-semibold text-ink">
-            Modello AI
-            <select
-              value={isCustomModel ? 'custom' : model}
-              onChange={(e) => {
-                const val = e.target.value;
-                if (val === 'custom') {
-                  setIsCustomModel(true);
-                } else {
-                  setIsCustomModel(false);
-                  setModel(val);
-                }
-              }}
-              className="w-full rounded-ios border border-line bg-bg px-3 py-2 text-xs font-normal outline-none focus:border-zone"
-            >
-              {GEMINI_MODELS.map((m) => (
-                <option key={m.value} value={m.value}>
-                  {m.label}
-                </option>
-              ))}
-              <option value="custom">Altro modello personalizzato...</option>
-            </select>
-            {!isCustomModel && selectedModel && <span className="text-[11px] font-normal text-ink-faint">{selectedModel.hint}</span>}
-          </label>
-
-          {isCustomModel && (
-            <label className="flex flex-col gap-1 text-xs font-semibold text-ink">
-              Nome del modello
-              <input
-                type="text"
-                value={customModel}
-                onChange={(e) => setCustomModel(e.target.value)}
-                placeholder="gemini-2.5-flash"
-                className="w-full rounded-ios border border-line bg-bg px-3 py-2 text-xs font-normal outline-none focus:border-zone"
-              />
-            </label>
-          )}
-
           <label className="flex flex-col gap-1 text-xs font-semibold text-ink">
             Chiave API {settings?.hasApiKey ? `(attuale: •••${settings.apiKeyLastFour})` : ''}
             <input

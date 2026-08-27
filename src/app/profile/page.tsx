@@ -78,7 +78,7 @@ export default function ProfilePage() {
       <section className="card flex flex-col gap-3 p-4 shadow-card">
         <p className="font-display text-base font-bold text-ink">Condizioni / infortuni</p>
         <div className="flex flex-wrap gap-1.5">
-          {KNOWLEDGE_BASE.filter((e) => e.id !== 'general_return_to_running' && e.id !== 'long_layoff_detraining').map((e) => {
+          {KNOWLEDGE_BASE.filter((e) => e.id !== 'general_return_to_running' && e.id !== 'long_layoff_detraining' && e.id !== 'kenyan_running_method' && e.id !== 'natural_running_principles' && e.id !== 'vital_running_method').map((e) => {
             const active = conditions.some((c) => c.knowledgeBaseId === e.id);
             return (
               <button

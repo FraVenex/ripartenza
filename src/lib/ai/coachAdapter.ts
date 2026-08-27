@@ -67,7 +67,7 @@ export async function evaluateAndAdaptWorkoutExecution(
     : 'L\'utente non ha inserito alcun feedback esplicito (nessuna indicazione su dolore all\'anca, RPE o note).';
 
   const completedStatsText = completed
-    ? `Dati registrati: Distanza ${(completed.distanceM ? completed.distanceM / 1000 : 0).toFixed(2)} km, Durata ${Math.round((completed.durationS ?? 0) / 60)} min, Frequenza cardiaca media ${completed.avgHrBpm ? Math.round(completed.avgHrBpm) + ' bpm' : 'N/D'}, Frequenza cardiaca massima ${completed.maxHrBpm ? Math.round(completed.maxHrBpm) + ' bpm' : 'N/D'}, Passo medio ${completed.avgPaceMinPerKm ? `${Math.floor(completed.avgPaceMinPerKm)}'${Math.round((completed.avgPaceMinPerKm % 1) * 60).toString().padStart(2, '0')}"/km` : 'N/D'}`
+    ? `Dati registrati: Distanza ${(completed.distanceM ? completed.distanceM / 1000 : 0).toFixed(2)} km, Durata ${Math.round((completed.durationS ?? 0) / 60)} min, Passo medio ${completed.avgPaceMinPerKm ? `${Math.floor(completed.avgPaceMinPerKm)}'${Math.round((completed.avgPaceMinPerKm % 1) * 60).toString().padStart(2, '0')}"/km` : 'N/D'}, FC media ${completed.avgHrBpm ? Math.round(completed.avgHrBpm) + ' bpm' : 'N/D'}, FC max ${completed.maxHrBpm ? Math.round(completed.maxHrBpm) + ' bpm' : 'N/D'}${completed.avgCadence ? `, Cadenza media ${completed.avgCadence} spm` : ''}${completed.elevationGainM != null || completed.elevationLossM != null ? `, Dislivello +${completed.elevationGainM ?? 0}m / -${completed.elevationLossM ?? 0}m` : ''}${completed.weather ? `, Meteo: ${completed.weather.temperatureC}°C, ${completed.weather.conditionDescription}` : ''}`
     : 'Dati attività registrati non disponibili in dettaglio.';
 
   const evaluationPrompt = `VALUTAZIONE AUTOMATICA E EVENTUALE ADATTAMENTO DEL PIANO DOPO NUOVI DATI DI CORSA.
@@ -78,17 +78,17 @@ DETTAGLI DELL'ALLENAMENTO IN PROGRAMMA:
 - Descrizione: ${workout.description}
 - Struttura teorica: ${JSON.stringify(workout.structure)}
 
-DETTAGLI DELLA PRESTAZIONE REALE APPENA SCARICATA:
+DETTAGLI DELLA PRESTAZIONE REALE APPENA SCARICATA (GARMIN):
 - ${completedStatsText}
 
-FEEDBACK DELL'UTENTE:
+FEEDBACK DELL'UTENTE (SOGGETTIVO & DOLORE):
 - ${userFeedbackText}
 
-ISTRUZIONI PER IL COACH:
-1. Valuta attentamente la prestazione confrontandola sia con la struttura prevista, sia con il profilo medico dell'atleta e lo storico consolidato del carico.
-2. Considera con massima priorità la prevenzione del dolore o del sovraccarico (ad esempio dolore all'anca, affaticamento o scostamenti dalla FC/passo). Prendi la decisione anche se l'utente NON ha inserito un feedback esplicito.
+ISTRUZIONI OPERATIVE PER IL COACH:
+1. Valuta la prestazione integrando i dati oggettivi reali (passo, FC, cadenza, dislivello +/-) con la struttura prevista, il profilo medico dell'atleta (in particolare la salute dell'anca / coxartrosi) e i principi metodologici (Pole Pole, cadenza agile 175-185 spm, gestione dell'impatto).
+2. Considera con massima priorità la prevenzione del dolore o del sovraccarico all'anca (criterio dolore ≤3-4/10 rientrante entro 24h, impatto delle discese o cadenze basse). Prendi decisioni cliniche anche se l'utente non ha inserito un feedback esplicito.
 3. Se ritieni che il piano vada ADATTATO e MODIFICATO per i prossimi giorni o settimane, fornisci obbligatoriamente le sessioni modificate o inserite nel blocco \`\`\`workout_json ... \`\`\`.
-4. Nel testo del tuo messaggio, fornisci all'atleta un'analisi sintetica e chiara di com'è andata la corsa e quali eventuali modifiche sono state apportate al piano.`;
+4. Nel testo del tuo messaggio, fornisci all'atleta un'analisi sintetica e chiara a 360° su com'è andata la corsa, consigli tecnici (postura, cadenza, sterrato, rinforzo glutei) e quali eventuali modifiche sono state apportate al piano.`;
 
   let result;
   try {

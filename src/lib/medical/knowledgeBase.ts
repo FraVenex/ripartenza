@@ -326,6 +326,203 @@ export const KNOWLEDGE_BASE: KnowledgeBaseEntry[] = [
 			"Qualsiasi dubbio diagnostico: la valutazione di un medico o fisioterapista viene sempre prima di seguire un protocollo generico."
 		],
 		references: ["Sintesi di più fonti cliniche e di medicina dello sport su gestione del carico e criteri di progressione nel ritorno alla corsa."]
+	},
+	{
+		id: "kenyan_running_method",
+		label: "Metodologia e Filosofia Keniota di Corsa",
+		aliases: [
+			"metodo keniano",
+			"metodo keniota",
+			"corsa keniana",
+			"corsa keniota",
+			"allenamento keniano",
+			"allenamento keniota",
+			"kenyan method",
+			"pole pole",
+			"fartlek keniano",
+			"fartlek keniota",
+			"progressione keniana",
+			"progressione keniota",
+			"kenyan progression",
+			"kenyan shuffle",
+			"renato canova",
+			"eliud kipchoge",
+			"iten",
+			"corsa a sensazione",
+			"effort based running",
+			"sterrato e saliscendi"
+		],
+		summary:
+			"Il metodo di corsa keniota, sviluppato nei centri di alta quota della Rift Valley come Iten e Kaptagat e teorizzato da tecnici di fama mondiale come Renato Canova e Brother Colm O'Connell oltre a campioni leggendari come Eliud Kipchoge, si fonda su principi di estrema semplicità, sostenibilità biologica e perfetta autoregolazione. I suoi cardini sono la rigenerazione autentica tramite corsa lenta ('Pole Pole'), la progressione graduale dal trotto iniziale ('Kenyan Shuffle') fino a ritmi più sostenuti, il fartlek continuo su sterrato a sensazione (senza pause da fermi), l'allenamento collinare per la forza elastica naturale e una biomeccanica efficiente con appoggio di mesopiede e alta cadenza, integrandosi perfettamente con i criteri evidence-based di prevenzione infortuni e gestione graduale del carico.",
+		generalPrinciples: [
+			"Principio 'Pole Pole' (Lento di Autentica Rigenerazione): le corse facili e di recupero devono essere corse a ritmi straordinariamente lenti e rilassati (Zona 1 o bassa Zona 2, RPE 2–3/10, anche 2–3 min/km più lenti del ritmo di soglia), azzerando l'ego per permettere la reale rigenerazione cellulare, la capillarizzazione, la sintesi di collagene nei tendini e il recupero articolare senza accumulo di fatica residua.",
+			"Il 'Kenyan Shuffle' e la Progressione Naturale: ogni seduta inizia con un trotto blando e rilassato a passo d'uomo nei primi chilometri (riscaldamento dinamico attivo), consentendo a cartilagini, liquido sinoviale, muscoli e tendini di lubrificarsi e scaldarsi in modo fisiologico; l'andatura aumenta in progressione continua e spontanea soltanto se il corpo risponde con sensazioni positive e scioltezza muscolare.",
+			"Fartlek Continuo a Sensazione (Kenyan Fartlek): le variazioni di ritmo vengono svolte a tempo (ad es. 1' svelto / 1' facile, 2'/1', piramidali) senza pause da fermi: la fase di recupero è sempre corsa a ritmo facile e continuo, stimolando la clearance e il riutilizzo del lattato in movimento (flessibilità metabolica) e sviluppando una percezione dello sforzo precisa e indipendente da riferimenti rigidi di passo al GPS.",
+			"Terreni Naturali, Sterrato e Collinare ('Red Dirt Roads'): predilezione per percorsi sterrati, sentieri campestri e saliscendi naturali, superfici che riducono i picchi di impatto sulle grandi articolazioni (anca, ginocchio) rispetto all'asfalto duro e allenano la forza reattiva dei piedi, delle caviglie e della catena posteriore (glutei e polpacci) senza la necessità di sovraccarichi artificiali.",
+			"Autoregolazione e Sforzo Percepito (Effort-Based Running): l'intensità della corsa viene sempre guidata dalla risposta fisiologica del corpo, dalla respirazione e dal livello di energia quotidiano, adattando lo sforzo alle condizioni climatiche, all'altimetria e allo stato di recupero piuttosto che inseguire parametri astratti fissati a tavolino.",
+			"Biomeccanica Naturale, Postura Alta e Ritorno Elastico: tronco allineato e rilassato ('running tall') con leggera proiezione in avanti dalle caviglie, spalle basse, oscillazione naturale e decontratta delle braccia, contatto reattivo di mesopiede/avampiede sotto il baricentro corporeo e cadenza agile (175–185+ passi/minuto) per minimizzare il tempo di contatto al suolo e massimizzare l'accumulo e il rilascio di energia elastica del complesso gastrocnemio-tendine d'Achille e della fascia plantare.",
+			"Recupero Sacro, Riposo e Stile di Vita Essenziale: il riposo non è l'assenza di allenamento ma la fase in cui avvengono tutti gli adattamenti strutturali e biologici; sonno quantitativo e qualitativo, idratazione costante, alimentazione nutriente non processata e costanza cronica (consistency) hanno la precedenza su picchi di carico improvvisi o sedute estreme.",
+			"Sinergia con la Riabilitazione e la Prevenzione Infortuni: per chi rientra da infortuni o gestisce condizioni articolari (artrosi d'anca, dolore femoro-rotuleo, tendinopatia achillea), l'adozione del Pole Pole, dello sterrato, del riscaldamento progressivo e della cadenza elastica costituisce una barriera protettiva essenziale contro le recidive da sovraccarico meccanico."
+		],
+		graduatedProtocol: [
+			{
+				phase: "Fase 1 – Fondamenta 'Pole Pole' e Shuffle di Riscaldamento",
+				goal: "Imparare a correre i tratti facili a ritmo lentissimo e decontratto (RPE 2–3/10) su terreno morbido/sterrato, iniziando ogni sessione con 5–10 minuti di trotto blando prima di qualsiasi incremento di ritmo.",
+				criteriaToProgress: "Capacità di mantenere la corsa in Zona 1/Z2 bassa a respiro facile e rilassato, senza cedere alla tentazione di accelerare; recupero asintomatico e assenza di indolenzimenti articolari o tendinei il giorno successivo."
+			},
+			{
+				phase: "Fase 2 – Introduzione al Fartlek Continuo Breve",
+				goal: "Inserimento di brevi variazioni di ritmo a sensazione (es. 10–12 ripetizioni da 1 minuto svelto a RPE 6–7/10 alternate a 1 minuto di corsa facile continua, mai da fermi) su sterrato regolare o lievi saliscendi.",
+				criteriaToProgress: "Completamento dell'intera sequenza mantenendo una corsa fluida e continua anche nei minuti di recupero, con frequenza cardiaca e sforzo ben controllati e senza dolore muscoloscheletrico residuo a 24–48 ore."
+			},
+			{
+				phase: "Fase 3 – Progressioni Keniane e Collinari Dolci",
+				goal: "Introduzione di corse progressive (partenza molto lenta nei primi km e finale a ritmo medio-brillante solo se le gambe rispondono spontaneamente) e collinari su sentieri sterrati per lo sviluppo della forza reattiva naturale.",
+				criteriaToProgress: "Esecuzione naturale della progressione senza strappi forzati o affanno respiratorio precoce; perfetta tolleranza articolare dell'anca, del ginocchio e del tendine d'Achille sui saliscendi."
+			},
+			{
+				phase: "Fase 4 – Consolidamento Specifico e Padronanza dell'Autoregolazione",
+				goal: "Integrazione completa della periodizzazione keniota: alternanza rigorosa di giornate 'Pole Pole' puramente rigeneranti, sedute di fartlek strutturato o progressivo continuo e mantenimento della postura decontratta ad alta cadenza.",
+				criteriaToProgress: "Piena capacità di autoregolare i ritmi e la durata in base alla fatica percepita, eccellente efficienza di corsa e continuità di allenamento su più settimane senza interruzioni per sovraccarico."
+			}
+		],
+		redFlags: [
+			"Correre le sessioni facili o rigeneranti a ritmi sostenuti per ansia o 'dettatura del cronometro/GPS', trasformando ogni uscita in una prova di ritmo e impedendo il recupero biologico dei tessuti.",
+			"Partire subito veloci o al ritmo target senza i primi minuti di trotto blando di adattamento articolare e cardiovascolare.",
+			"Trasformare il fartlek a sensazione in ripetute anaerobiche massimali con affanno estremo, che inducono deterioramento della tecnica di corsa e sovraccarico dei tendini.",
+			"Insorgenza o aumento di dolore muscoloscheletrico localizzato (dolore >3–4/10 o che persiste il giorno dopo) durante tratti collinari o variazioni di ritmo: in presenza di dolore, interrompere la frazione veloce e tornare al passo blando o al cammino.",
+			"Ignorare la stanchezza profonda o la mancanza di sonno continuando a forzare l'intensità delle sedute."
+		],
+		references: [
+			"Renato Canova – Specificity, Special Blocks and Extension of Intensity in Distance and Marathon Running.",
+			"Eliud Kipchoge & Patrick Sang – Holistic Coaching Philosophy, Consistency, Regeneration and Long Run Discipline.",
+			"Brother Colm O'Connell – The St. Patrick's High School Training Philosophy, Natural Progression and Group Dynamics in Iten.",
+			"Toby Tanser (2008) – 'More Fire: How to Run the Kenyan Way' e 'Train Hard, Win Easy'.",
+			"Adharanand Finn (2012) – 'Running with the Kenyans: Discovering the Secrets of the Fastest People on Earth'.",
+			"Billat et al. (2001, 2003) – Fisiologia, costo energetico, clearance del lattato e pattern di allenamento dei mezzofondisti e maratoneti dell'Africa orientale.",
+			"Larsen (2003) – Potential mechanisms for the success of East African distance runners: running economy, muscle elasticity, and lifestyle factors.",
+			"Bramble & Lieberman (2004) – Endurance running and the evolution of the genus Homo: elastic energy storage in human tendons and barefoot/midfoot mechanics."
+		]
+	},
+	{
+		id: "natural_running_principles",
+		label: "Correre Naturale e Biomeccanica Funzionale (Scuola Vecchioni)",
+		aliases: [
+			"correre naturale",
+			"corsa naturale",
+			"daniele vecchioni",
+			"barefoot running",
+			"rieducazione del piede",
+			"7 pilastri tecnica corsa",
+			"cadenza naturale",
+			"mobilità piedi",
+			"appoggio mesopiede",
+			"propriocezione piedi",
+			"salute articolare"
+		],
+		summary:
+			"Il metodo 'Correre Naturale' ideato da Daniele Vecchioni riscopre la biomeccanica ancestrale del corpo umano, considerando la corsa non come causa di infortuni ma come medicina per la salute, purché eseguita con schemi motori corretti. Si focalizza sui 7 pilastri della tecnica (postura, ritmo/cadenza, relax, appoggio come conseguenza, testa/sguardo, braccia, minima oscillazione verticale) e sulla riattivazione funzionale dei piedi ('risveglio dei piedi'), superando l'analfabetismo motorio indotto da calzature iper-strutturate e posture sedentarie con una transizione progressiva e consapevole.",
+		generalPrinciples: [
+			"I 7 Pilastri della Tecnica di Corsa: 1) Postura eretta con allineamento strutturale; 2) Ritmo e cadenza elevata (175–185 spm) per minimizzare l'impatto al suolo; 3) Relax muscolare (contrarre solo i muscoli necessari e decontrarre istantaneamente gli antagonisti); 4) Appoggio del piede come conseguenza naturale di postura e cadenza, non come gesto forzato; 5) Testa eretta con sguardo all'orizzonte; 6) Braccia a 90° con oscillazione avanti-indietro decontratta; 7) Bassa oscillazione verticale per convertire l'energia in avanzamento orizzontale.",
+			"Ristrutturazione e Risveglio dei Piedi ('Feet First'): il piede umano possiede 26 ossa, 33 articolazioni e oltre 100 muscoli e legamenti. Esercizi di mobilità articolare delle dita, estensione dell'alluce, rinforzo della muscolatura intrinseca plantare e camminata scalzi (barefoot) in ambiente domestico o su superfici naturali (erba, sabbia) restituiscono sensibilità propriocettiva e stabilità all'intera catena cinetica.",
+			"Inclinazione Naturale dalle Caviglie (Non dal Bacino): l'inclinazione in avanti del corpo deve partire dall'asse delle caviglie, sfruttando la forza di gravità per l'avanzamento senza spezzare il busto in avanti all'altezza della vita (che sovraccaricherebbe la zona lombare e le anche).",
+			"Transizione Graduale e Consapevole: il passaggio verso una corsa naturale e calzature meno restrittive (drop ridotto o barefoot) deve essere estremamente graduale per permettere a tendine d'Achille, polpacci e fascia plantare di riadattarsi senza subire sovraccarichi infiammatori.",
+			"Mobilità Articolare Globale e Schemi Motori di Base: il recupero del deep squat (accosciata profonda a terra), la mobilità delle anche e la dorsiflessione della caviglia sono prerequisiti fondamentali per consentire alle gambe di ammortizzare naturalmente l'impatto durante la corsa."
+		],
+		graduatedProtocol: [
+			{
+				phase: "Fase 1 – Risveglio dei Piedi, Mobilità Caviglia/Anche e Postura Statica",
+				goal: "Esercizi quotidiani per le dita e l'arco plantare, camminata a piedi nudi in casa, stretching della catena posteriore e lavoro sull'allineamento testa-tronco-bacino.",
+				criteriaToProgress: "Capacità di eseguire un deep squat confortevole a talloni a terra e controllo della postura senza tensioni alla schiena o al collo."
+			},
+			{
+				phase: "Fase 2 – Camminata Consapevole, Barefoot Domestico e Cadenza Agile",
+				goal: "Rieducazione dello schema del passo, camminata barefoot su erba/sabbia e introduzione di esercizi di ritmo con metronomo a 175–180 bpm sul posto.",
+				criteriaToProgress: "Passo fluido senza impatto pesante sul tallone nel cammino e facilità nel mantenere il ritmo leggero senza affaticamento dei polpacci."
+			},
+			{
+				phase: "Fase 3 – Transizione Dinamica, Cammina-Corri e Decontrazione",
+				goal: "Brevi tratti di corsa naturale alternati a cammino, focalizzandosi sul rilassamento di spalle e braccia e sull'appoggio spontaneo sotto il baricentro.",
+				criteriaToProgress: "Assenza di sovraccarichi al tendine d'Achille o alla fascia plantare a 24–48 ore e corsa rilassata senza rigidità muscolare."
+			},
+			{
+				phase: "Fase 4 – Consolidamento del Gesto Naturale e Corsa Elastica Sostenibile",
+				goal: "Integrazione duratura della tecnica corretta nelle uscite continue di corsa, con oscillazione verticale minima ed elevata efficienza energetica.",
+				criteriaToProgress: "Corsa continua confortevole, cadenza stabile attorno a 175–185 passi/minuto e assenza totale di infortuni da sovraccarico biomeccanico."
+			}
+		],
+		redFlags: [
+			"Forzare artificialmente l'appoggio di avampiede 'a ballerina' senza correggere prima la postura e la cadenza, provocando sovraccarichi acuti su tendine d'Achille e polpacci.",
+			"Passare bruscamente a scarpe a drop zero o correre scalzi su asfalto senza aver prima condizionato i tessuti e i piedi per diversi mesi.",
+			"Rigidità muscolare marcata con mascella serrata, spalle alzate verso le orecchie o pugni chiusi durante la corsa.",
+			"Dolore acuto alla pianta del piede o alla tibia: fermarsi immediatamente e ripristinare il carico protetto."
+		],
+		references: [
+			"Daniele Vecchioni – 'Corsa, la medicina perfetta: Come correre naturalmente, prevenire gli infortuni e vivere meglio'.",
+			"Daniele Vecchioni – Metodo Correre Naturale e 'I 7 Pilastri della Tecnica di Corsa'.",
+			"Lieberman et al. (2010) – Foot strike patterns and collision forces in habitually barefoot versus shod runners (Nature).",
+			"Romanov – The Pose Method of Running: A Revolutionary Approach to Injury-Free Running.",
+			"McDougall (2009) – 'Born to Run: The Hidden Tribe, the Ultra-Runners, and the Greatest Race the World Has Never Seen'."
+		]
+	},
+	{
+		id: "vital_running_method",
+		label: "Metodo V.I.T.A.L.E. e Corsa Consapevole (Scuola Esco a Correre)",
+		aliases: [
+			"esco a correre",
+			"simone luciani",
+			"metodo vitale",
+			"metodo v.i.t.a.l.e.",
+			"corsa consapevole",
+			"il cammino del runner",
+			"mindful running",
+			"longevità del runner",
+			"runner evoluto",
+			"anime di corsa"
+		],
+		summary:
+			"Ideato da Simone Luciani, fondatore della community e scuola 'Esco a Correre' e autore de 'Il cammino del runner', il metodo V.I.T.A.L.E. è un approccio olistico e sistemico che trasforma la corsa in uno strumento di longevità, benessere ed equilibrio personale. Si basa su 6 pilastri interconnessi (Visione, Intenzione, Tecnica, Allenamento, Longevità, Energia) e promuove la figura del 'Runner Evoluto': un atleta consapevole che non segue ciecamente le tabelle ma sa ascoltare i segnali del corpo, adattando il carico con intelligenza per correre senza farsi male per tutta la vita.",
+		generalPrinciples: [
+			"Il Framework V.I.T.A.L.E.: 1) Visione: chiarire il proprio 'perché' profondo per mantenere motivazione e gioia a lungo termine; 2) Intenzione: agire con presenza mentale e consapevolezza dello scopo di ogni singola seduta; 3) Tecnica: curare allineamento, cadenza e appoggio per rendere il gesto economico e non traumatico; 4) Allenamento: modulazione polarizzata del carico (predominanza di volume aerobico facile rispetto all'intensità); 5) Longevità: integrazione indispensabile di forza muscolare funzionale, mobilità e recupero; 6) Energia: ottimizzazione di sonno, alimentazione nutriente e gestione dello stress.",
+			"Il Concetto di 'Runner Evoluto': il vero runner maturo è colui che sa prendere decisioni intelligenti quando il piano di allenamento incontra la realtà quotidiana (stanchezza lavorativa, stress emotivo, un piccolo fastidio muscolare). Saper rallentare, accorciare o riposare è un segno di forza e competenza, non di debolezza.",
+			"Longevità Prima della Performance: la vera vittoria di un corridore non è il record personale isolato ma la capacità di continuare a correre con salute e gioia a 40, 50, 60 e 70 anni. La forza muscolare e la mobilità non sono accessori opzionali ma 'l'armatura protettiva' che protegge ossa, tendini e articolazioni.",
+			"Intenzione e Corsa Consapevole (Mindful Running): correre con presenza, percependo il ritmo del respiro, il contatto con il suolo e lo stato di tensione corporea, trasformando ogni uscita in un momento di ricarica mentale ed equilibrio.",
+			"Gradualità Sostenibile e Costanza: per chi riparte o comincia da zero, alternare corsa e camminata (Run-Walk) con volumi contenuti (20–30 minuti a giorni alterni) garantisce un adattamento biologico progressivo e previene il sovraccarico tipico dell'eccesso di entusiasmo iniziale."
+		],
+		graduatedProtocol: [
+			{
+				phase: "Fase 1 – Visione, Base Cammina-Corri e Routine di Longevità",
+				goal: "Definire la propria motivazione, iniziare con sessioni brevi di cammina-corri a giorni alterni e inserire 2 brevi sedute di forza a corpo libero e mobilità a settimana.",
+				criteriaToProgress: "Aderenza costante per 3–4 settimane, piena tolleranza articolare e sensazione di benessere ed energia post-uscita."
+			},
+			{
+				phase: "Fase 2 – Consolidamento Tecnico, Corsa Facile e Gestione dell'Energia",
+				goal: "Transizione a tratti di corsa continua a ritmo conversazionale (intenzione aerobica pura), ottimizzazione di sonno e alimentazione per sostenere l'adattamento biologico.",
+				criteriaToProgress: "Tollera 30 minuti di corsa continua facile con recupero completo tra le sessioni e sonno ristoratore."
+			},
+			{
+				phase: "Fase 3 – Sviluppo Aerobico, Variazioni Controllate e Mentalità del Runner Evoluto",
+				goal: "Aumento progressivo della durata delle uscite facili, introduzione di moderate variazioni di ritmo a sensazione e applicazione dell'autoregolazione nei giorni di stress elevato.",
+				criteriaToProgress: "Capacità dimostrata di modulare o rimodulare l'allenamento in base al feedback corporeo, senza forzature quando affaticati."
+			},
+			{
+				phase: "Fase 4 – Longevità Integrata e Obiettivi a Lungo Termine",
+				goal: "Consolidamento del triangolo corsa-forza-recupero per una pratica sostenibile per tutto l'arco della vita, affrontando eventuali obiettivi di distanza o gara con equilibrio e serenità.",
+				criteriaToProgress: "Continuità di allenamento su mesi e anni senza infortuni da overuse, equilibrio psicofisico e piacere costante nella corsa."
+			}
+		],
+		redFlags: [
+			"Schiavitù dalla tabella rigida che spinge a correre a tutti i costi nonostante stanchezza profonda, febbre o dolore muscoloscheletrico persistente.",
+			"Trascurare totalmente il lavoro di forza e mobilità considerandolo tempo sottratto ai chilometri di corsa.",
+			"Accumulo cronico di stress lavorativo/personale e privazione di sonno combinati con allenamenti intensi, che innalzano il cortisolo e il rischio di infortuni.",
+			"Ignorare la gradualità aumentando bruscamente volume o velocità per foga di raggiungere un risultato immediato."
+		],
+		references: [
+			"Simone Luciani – 'Il cammino del runner: Il metodo V.I.T.A.L.E. per correre tutta la vita senza farsi male' (Vallardi).",
+			"Simone Luciani – Esco a Correre Academy & Podcast 'Anime di Corsa'.",
+			"Seiler (2010) – What is best practice for training characteristics and dosing of endurance athletes? (Polarized Training).",
+			"Studi clinici su mindful running, benessere psicofisico e prevenzione degli infortuni da sovraccarico nel running ricreativo."
+		]
 	}
 ];
 
@@ -334,8 +531,6 @@ export function findKnowledgeBaseEntry(idOrAlias: string): KnowledgeBaseEntry | 
 	return KNOWLEDGE_BASE.find(e => e.id === q || e.label.toLowerCase() === q || e.aliases.some(a => a.toLowerCase() === q));
 }
 
-// Ricerca "morbida" per keyword, usata per costruire il contesto medico
-// dell'assistente a partire dal profilo medico dell'utente (testo libero incluso).
 export function searchKnowledgeBase(query: string): KnowledgeBaseEntry[] {
 	const q = query.toLowerCase();
 	return KNOWLEDGE_BASE.filter(e => q.includes(e.id.replace(/_/g, " ")) || e.aliases.some(alias => q.includes(alias.toLowerCase())) || q.includes(e.label.toLowerCase()));

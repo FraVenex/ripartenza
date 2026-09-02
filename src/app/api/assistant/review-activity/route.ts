@@ -135,6 +135,7 @@ export async function POST(req: NextRequest) {
   await supabase
     .from('activity_log')
     .update({
+      coach_reviewed: true,
       raw: {
         ...raw,
         coach_reviewed: true,
@@ -152,6 +153,29 @@ export async function POST(req: NextRequest) {
       .limit(1)
       .maybeSingle();
     targetWorkoutId = matchingW?.id;
+  }
+
+  if (!targetWorkoutId) {
+    const { data: matchingGarmin } = await supabase
+      .from('workouts')
+      .select('id')
+      .eq('user_id', user.id)
+      .filter('completed_activity->>garminActivityId', 'eq', activityRow.garmin_activity_id)
+      .limit(1)
+      .maybeSingle();
+    targetWorkoutId = matchingGarmin?.id;
+  }
+
+  if (!targetWorkoutId) {
+    const { data: nextPlanned } = await supabase
+      .from('workouts')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('status', 'planned')
+      .order('date', { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    targetWorkoutId = nextPlanned?.id;
   }
 
   if (targetWorkoutId) {

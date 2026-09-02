@@ -8,7 +8,6 @@ const ITEMS = [
   { href: '/', label: 'Piano', icon: PlanIcon },
   { href: '/coach', label: 'Coach', icon: CoachIcon },
   { href: '/progress', label: 'Progressi', icon: ProgressIcon },
-  { href: '/archive', label: 'Archivio', icon: ArchiveIcon },
   { href: '/profile', label: 'Profilo', icon: ProfileIcon },
   { href: '/settings', label: 'Impostazioni', icon: SettingsIcon },
 ];
@@ -98,16 +97,6 @@ function ProgressIcon({ className, active }: { className?: string; active?: bool
     <svg {...iconProps(className)}>
       <path d="M3 3v18h18" strokeLinecap="round" strokeLinejoin="round" />
       <path d="M19 9l-5 5-4-4-3 3" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function ArchiveIcon({ className, active }: { className?: string; active?: boolean }) {
-  return (
-    <svg {...iconProps(className)}>
-      <rect x="3" y="4" width="18" height="4" rx="1" fill={active ? 'currentColor' : 'none'} fillOpacity={active ? 0.15 : 0} />
-      <path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M10 12h4" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }

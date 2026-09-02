@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { WORKOUT_TYPE_LABEL, type WorkoutType, type ActivityWeatherSummary } from '@/lib/types';
+import { type WorkoutType } from '@/lib/types';
 import { MarkdownRenderer } from '@/components/MarkdownRenderer';
 
 interface ChatMsg {
@@ -22,22 +22,41 @@ interface ProposedWorkout {
 interface UnreviewedActivity {
   id: string;
   garminActivityId: string;
+  activityName: string;
   date: string;
+  startTimeLocal: string | null;
   type: string;
-  distanceM: number | null;
-  durationS: number | null;
-  avgHrBpm: number | null;
-  maxHrBpm: number | null;
-  avgPaceMinPerKm: number | null;
-  elevationGainM: number | null;
-  elevationLossM: number | null;
-  avgCadence: number | null;
-  weather?: ActivityWeatherSummary | null;
   matchingWorkout?: {
     id: string;
     title: string;
     type: WorkoutType;
+    date: string;
   } | null;
+}
+
+function formatActivityDateTime(dateStr: string, timeLocalStr?: string | null) {
+  try {
+    const d = new Date(dateStr + 'T00:00:00');
+    const nowIso = new Date().toISOString().slice(0, 10);
+    const isToday = nowIso === dateStr;
+
+    const y = new Date();
+    y.setDate(y.getDate() - 1);
+    const isYesterday = y.toISOString().slice(0, 10) === dateStr;
+
+    let datePart = d.toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'short' });
+    if (isToday) datePart = 'Oggi';
+    else if (isYesterday) datePart = 'Ieri';
+
+    let timePart = '';
+    if (timeLocalStr && timeLocalStr.length >= 16) {
+      timePart = timeLocalStr.substring(11, 16);
+    }
+
+    return `${datePart}${timePart ? ` (${timePart})` : ''}`;
+  } catch {
+    return dateStr;
+  }
 }
 
 function ChatPanelContent() {
@@ -50,13 +69,9 @@ function ChatPanelContent() {
   const [workoutsSavedNotice, setWorkoutsSavedNotice] = useState(false);
   const [profileUpdatedNotice, setProfileUpdatedNotice] = useState(false);
   const [resetting, setResetting] = useState(false);
+
   const [unreviewedActivity, setUnreviewedActivity] = useState<UnreviewedActivity | null>(null);
-  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
-  const [feedbackRpe, setFeedbackRpe] = useState<number | ''>(5);
-  const [feedbackPain, setFeedbackPain] = useState<number | ''>(0);
-  const [feedbackPainLocation, setFeedbackPainLocation] = useState('');
-  const [feedbackNotes, setFeedbackNotes] = useState('');
-  const [reviewing, setReviewing] = useState(false);
+  const [isDismissed, setIsDismissed] = useState(false);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -78,20 +93,23 @@ function ChatPanelContent() {
         setProposals(extractedProposals);
       });
 
-    const checkUnreviewed = () => {
+    const checkLatestRun = () => {
       fetch('/api/assistant/unreviewed-activity')
         .then((r) => r.json())
         .then((data) => {
           if (data?.unreviewedActivity) {
             setUnreviewedActivity(data.unreviewedActivity);
+            setIsDismissed(false);
+          } else {
+            setUnreviewedActivity(null);
           }
         })
         .catch(() => {});
     };
 
-    checkUnreviewed();
+    checkLatestRun();
 
-    const handleSyncEvent = () => checkUnreviewed();
+    const handleSyncEvent = () => checkLatestRun();
     window.addEventListener('garmin_sync_completed', handleSyncEvent);
 
     const initMsg = searchParams.get('initial_message');
@@ -113,7 +131,18 @@ function ChatPanelContent() {
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, proposals, loading, showFeedbackModal]);
+  }, [messages, proposals, loading]);
+
+  function handleDiscussInChat() {
+    if (!unreviewedActivity) return;
+    const sessionName = unreviewedActivity.activityName || unreviewedActivity.matchingWorkout?.title || 'Sessione di Corsa';
+    const prep = `Ho completato la sessione "${sessionName}". Ecco le mie sensazioni: `;
+    setInput(prep);
+    if (textareaRef.current) {
+      textareaRef.current.focus();
+      textareaRef.current.setSelectionRange(prep.length, prep.length);
+    }
+  }
 
   async function handleReset() {
     if (!window.confirm("Sei sicuro di voler cancellare l'intero piano di allenamento e lo storico della chat per ricominciare da zero?")) {
@@ -140,6 +169,19 @@ function ChatPanelContent() {
   async function send() {
     if (!input.trim() || loading) return;
     const userMsg = input.trim();
+
+    if (unreviewedActivity) {
+      fetch('/api/assistant/review-activity', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          activityId: unreviewedActivity.id,
+          workoutId: unreviewedActivity.matchingWorkout?.id || null,
+        }),
+      }).catch(() => {});
+      setIsDismissed(true);
+    }
+
     setInput('');
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
@@ -176,224 +218,58 @@ function ChatPanelContent() {
     }
   }
 
-  async function submitActivityFeedback() {
-    if (!unreviewedActivity || reviewing) return;
-    setReviewing(true);
-    setError(null);
-
-    try {
-      const res = await fetch('/api/assistant/review-activity', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          activityId: unreviewedActivity.id,
-          workoutId: unreviewedActivity.matchingWorkout?.id,
-          rpe: feedbackRpe || null,
-          painScore: feedbackPain === '' ? 0 : feedbackPain,
-          painLocation: feedbackPainLocation || null,
-          notes: feedbackNotes || null,
-        }),
-      });
-
-      const data = await res.json();
-      setReviewing(false);
-
-      if (!res.ok) {
-        setError(data.error ?? 'Errore invio feedback al coach.');
-        return;
-      }
-
-      setShowFeedbackModal(false);
-      setUnreviewedActivity(null);
-
-      const refreshedChat = await fetch('/api/assistant').then((r) => r.json());
-      if (refreshedChat?.messages) {
-        setMessages(refreshedChat.messages);
-      }
-
-      if (data.planAdapted) {
-        setWorkoutsSavedNotice(true);
-      }
-    } catch (e) {
-      setReviewing(false);
-      setError((e as Error).message);
-    }
-  }
-
-  const formatPace = (paceMinKm: number | null) => {
-    if (!paceMinKm) return 'N/D';
-    const min = Math.floor(paceMinKm);
-    const sec = Math.round((paceMinKm % 1) * 60);
-    return `${min}'${sec.toString().padStart(2, '0')}"/km`;
-  };
-
   return (
-    <div className="flex h-[calc(100vh-180px)] flex-col justify-between md:h-[calc(100vh-160px)]">
-      <div className="flex-1 space-y-3.5 overflow-y-auto px-1 pb-4">
-        <div className="flex items-center justify-between gap-2 rounded-2xl border border-line/60 bg-surface/80 p-3 text-xs text-ink-soft shadow-card backdrop-blur-md">
-          <span>La chat gestisce la conoscenza per creare e modificare il tuo piano da 6 settimane.</span>
+    <div className="relative flex h-[calc(100vh-180px)] flex-col justify-between md:h-[calc(100vh-160px)]">
+      <div className="mb-2 shrink-0 flex flex-col gap-2">
+        <div className="flex items-center justify-between gap-2 rounded-2xl border border-line/60 bg-surface/80 p-2.5 text-xs text-ink-soft shadow-card backdrop-blur-md">
+          <span className="truncate">Chat e guida per il piano da 6 settimane (2 sessioni/settimana).</span>
           <button
             onClick={handleReset}
             disabled={resetting || loading}
             className="ios-btn-active shrink-0 rounded-pill border border-track/30 bg-track-soft px-3 py-1 font-semibold text-track-dark disabled:opacity-50"
           >
-            {resetting ? 'Cancellazione…' : 'Reset 🗑️'}
+            {resetting ? 'Reset…' : 'Reset 🗑️'}
           </button>
         </div>
 
-        {unreviewedActivity && (
-          <div className="rounded-2xl border-2 border-track bg-white p-4 shadow-card">
-            <div className="flex items-start justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <span className="flex h-2.5 w-2.5 rounded-full bg-track animate-pulse" />
-                <span className="font-stat text-xs font-bold uppercase tracking-wider text-track">Nuova Corsa Scaricata</span>
-              </div>
-              <span className="font-stat text-xs font-semibold text-ink-faint">
-                {new Date(unreviewedActivity.date + 'T00:00:00').toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })}
+        {unreviewedActivity && !isDismissed && (
+          <div className="flex items-center justify-between gap-3 rounded-2xl border border-track/30 bg-gradient-to-r from-track-soft/40 via-white to-zone-soft/30 px-4 py-3 shadow-card backdrop-blur-md">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <span className="relative flex h-2.5 w-2.5 shrink-0">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-track opacity-75"></span>
+                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-track"></span>
               </span>
-            </div>
-
-            <div className="mt-2.5 grid grid-cols-2 sm:grid-cols-4 gap-2 font-stat text-xs">
-              <div className="rounded-ios bg-bg p-2 text-center">
-                <p className="text-[10px] text-ink-faint uppercase font-bold">Distanza</p>
-                <p className="font-bold text-ink text-sm">
-                  {unreviewedActivity.distanceM ? `${(unreviewedActivity.distanceM / 1000).toFixed(2)} km` : 'N/D'}
-                </p>
-              </div>
-              <div className="rounded-ios bg-bg p-2 text-center">
-                <p className="text-[10px] text-ink-faint uppercase font-bold">Tempo</p>
-                <p className="font-bold text-ink text-sm">
-                  {unreviewedActivity.durationS ? `${Math.round(unreviewedActivity.durationS / 60)} min` : 'N/D'}
-                </p>
-              </div>
-              <div className="rounded-ios bg-bg p-2 text-center">
-                <p className="text-[10px] text-ink-faint uppercase font-bold">Passo / FC</p>
-                <p className="font-bold text-ink text-sm">
-                  {formatPace(unreviewedActivity.avgPaceMinPerKm)}
-                </p>
-              </div>
-              <div className="rounded-ios bg-bg p-2 text-center">
-                <p className="text-[10px] text-ink-faint uppercase font-bold">Dislivello / Meteo</p>
-                <p className="font-bold text-ink text-sm truncate">
-                  {unreviewedActivity.elevationGainM != null ? `+${unreviewedActivity.elevationGainM}m` : ''}
-                  {unreviewedActivity.weather ? ` · ${unreviewedActivity.weather.temperatureC}°C` : ''}
-                </p>
+              <div className="min-w-0">
+                <div className="text-[11px] font-bold text-track uppercase tracking-wider">
+                  Sessione Scaricata ({formatActivityDateTime(unreviewedActivity.date, unreviewedActivity.startTimeLocal)})
+                </div>
+                <div className="truncate font-headline text-sm font-extrabold text-ink">
+                  {unreviewedActivity.activityName || unreviewedActivity.matchingWorkout?.title || 'Sessione di Corsa'}
+                </div>
               </div>
             </div>
 
-            {unreviewedActivity.weather && (
-              <p className="mt-2 text-[11px] text-ink-soft">
-                🌤️ Meteo rilevato: <span className="font-semibold">{unreviewedActivity.weather.temperatureC}°C</span>, {unreviewedActivity.weather.conditionDescription}
-                {unreviewedActivity.weather.humidityPercent ? ` (Umidità ${unreviewedActivity.weather.humidityPercent}%)` : ''}
-              </p>
-            )}
-
-            {!showFeedbackModal ? (
+            <div className="flex items-center gap-2 shrink-0">
               <button
-                onClick={() => setShowFeedbackModal(true)}
-                className="ios-btn-active mt-3 w-full rounded-pill bg-track py-2.5 text-xs font-bold text-white shadow-sm hover:opacity-95"
+                onClick={handleDiscussInChat}
+                disabled={loading}
+                className="ios-btn-active inline-flex items-center gap-1.5 rounded-pill bg-track px-4 py-1.5 text-xs font-extrabold text-white shadow-md hover:opacity-95 disabled:opacity-50 transition-all"
               >
-                Inserisci Feedback e Discuti con il Coach 💬
+                <span>💬</span> Discuti la sessione con il Coach
               </button>
-            ) : (
-              <div className="mt-3.5 border-t border-line/60 pt-3 flex flex-col gap-3">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-xs font-semibold text-ink block mb-1">
-                      Sforzo percepito (RPE: 1 Facile - 10 Massimale)
-                    </label>
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((val) => (
-                        <button
-                          key={val}
-                          type="button"
-                          onClick={() => setFeedbackRpe(val)}
-                          className={`h-8 w-8 rounded-full font-stat text-xs font-bold transition-all ${
-                            feedbackRpe === val
-                              ? 'bg-track text-white scale-105'
-                              : 'bg-bg text-ink-soft hover:bg-surfaceSunken'
-                          }`}
-                        >
-                          {val}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="text-xs font-semibold text-ink block mb-1">
-                      Livello di dolore / fastidi (0 Nessuno - 10 Forte)
-                    </label>
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((val) => (
-                        <button
-                          key={val}
-                          type="button"
-                          onClick={() => setFeedbackPain(val)}
-                          className={`h-8 w-8 rounded-full font-stat text-xs font-bold transition-all ${
-                            feedbackPain === val
-                              ? val === 0 ? 'bg-recovery text-white' : 'bg-track-dark text-white'
-                              : 'bg-bg text-ink-soft hover:bg-surfaceSunken'
-                          }`}
-                        >
-                          {val}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                {Number(feedbackPain) > 0 && (
-                  <div>
-                    <label className="text-xs font-semibold text-ink block mb-1">
-                      Dove hai avvertito fastidio o dolore?
-                    </label>
-                    <input
-                      type="text"
-                      value={feedbackPainLocation}
-                      onChange={(e) => setFeedbackPainLocation(e.target.value)}
-                      placeholder="es. anca destra, polpaccio, tendine d'Achille..."
-                      className="w-full rounded-ios border border-line bg-surface px-3 py-2 text-xs text-ink placeholder:text-ink-faint"
-                    />
-                  </div>
-                )}
-
-                <div>
-                  <label className="text-xs font-semibold text-ink block mb-1">
-                    Come ti sei sentito? Note e sensazioni
-                  </label>
-                  <textarea
-                    value={feedbackNotes}
-                    onChange={(e) => setFeedbackNotes(e.target.value)}
-                    rows={2}
-                    placeholder="es. Sensazione di buona reattività, gambe sciolte, ritmo facile tranne nel tratto in salita..."
-                    className="w-full rounded-ios border border-line bg-surface px-3 py-2 text-xs text-ink placeholder:text-ink-faint"
-                  />
-                </div>
-
-                <div className="flex items-center justify-end gap-2 pt-1">
-                  <button
-                    type="button"
-                    onClick={() => setShowFeedbackModal(false)}
-                    disabled={reviewing}
-                    className="rounded-pill px-3 py-1.5 text-xs font-semibold text-ink-soft hover:bg-surfaceSunken"
-                  >
-                    Annulla
-                  </button>
-                  <button
-                    type="button"
-                    onClick={submitActivityFeedback}
-                    disabled={reviewing}
-                    className="ios-btn-active rounded-pill bg-track px-4 py-2 text-xs font-bold text-white shadow-sm disabled:opacity-50"
-                  >
-                    {reviewing ? 'Invio e analisi in corso…' : 'Invia al Coach per Analisi 🚀'}
-                  </button>
-                </div>
-              </div>
-            )}
+              <button
+                onClick={() => setIsDismissed(true)}
+                className="flex h-7 w-7 items-center justify-center rounded-full bg-black/5 text-xs font-bold text-ink-faint hover:bg-black/10 hover:text-ink transition-colors"
+                title="Nascondi"
+              >
+                ✕
+              </button>
+            </div>
           </div>
         )}
+      </div>
 
+      <div className="flex-1 space-y-3.5 overflow-y-auto px-1 pb-4">
         {messages.length === 0 && (
           <div className="card p-5 text-center text-sm leading-relaxed text-ink-soft shadow-card">
             Benvenuto! Qui puoi impostare i tuoi piani di 6 settimane con test di valutazione, discutere ogni sessione di corsa e fare qualsiasi domanda al Coach.
@@ -447,31 +323,37 @@ function ChatPanelContent() {
         <div ref={bottomRef} />
       </div>
 
-      <div className="mt-2 flex items-end gap-2 rounded-2xl border border-line/60 bg-white p-2 shadow-card focus-within:border-zone/60 transition-colors">
-        <textarea
-          ref={textareaRef}
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-              e.preventDefault();
-              send();
-            }
+      <div className="shrink-0 pt-2">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            send();
           }}
-          rows={1}
-          placeholder="Scrivi un messaggio o chiedi un consiglio al coach..."
-          className="flex-1 max-h-36 min-h-[36px] resize-none bg-transparent px-2 py-1.5 text-sm text-ink outline-none placeholder:text-ink-faint overflow-y-auto leading-relaxed"
-        />
-        <button
-          onClick={send}
-          disabled={loading || !input.trim()}
-          className="ios-btn-active mb-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zone text-white shadow-sm disabled:opacity-40"
-          title="Invia messaggio"
+          className="flex items-end gap-2 rounded-2xl border border-line/60 bg-surface/90 p-2 shadow-card backdrop-blur-md"
         >
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18" />
-          </svg>
-        </button>
+          <textarea
+            ref={textareaRef}
+            rows={1}
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                send();
+              }
+            }}
+            placeholder="Scrivi un messaggio al Coach..."
+            disabled={loading}
+            className="max-h-36 min-h-[38px] flex-1 resize-none bg-transparent px-3 py-2 text-sm text-ink placeholder:text-ink-faint focus:outline-none disabled:opacity-50"
+          />
+          <button
+            type="submit"
+            disabled={!input.trim() || loading}
+            className="ios-btn-active inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-track text-white shadow-sm disabled:opacity-30"
+          >
+            ↑
+          </button>
+        </form>
       </div>
     </div>
   );
@@ -486,8 +368,7 @@ function extractWorkoutJson(text: string): ProposedWorkout[] {
       const parsed = JSON.parse(match[1].trim());
       if (Array.isArray(parsed)) blocks.push(...parsed);
       else blocks.push(parsed);
-    } catch {
-    }
+    } catch {}
   }
   return blocks;
 }

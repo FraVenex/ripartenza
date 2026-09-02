@@ -31,6 +31,9 @@ export default function LoginPage() {
       setError(error.message);
       return;
     }
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem('garmin_auto_synced');
+    }
     router.push('/');
     router.refresh();
   }

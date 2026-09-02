@@ -116,18 +116,41 @@ export function isRunningActivity(activityOrType?: unknown): boolean {
   );
 }
 
-export async function getGarminActivities(creds: GarminCredentials, limit = 30): Promise<GarminActivityItem[]> {
+export async function getGarminActivities(creds: GarminCredentials, limit = 20): Promise<GarminActivityItem[]> {
+  const safeLimit = Math.max(1, Math.min(limit, 25));
   try {
     const gc = await loginGarminConnect(creds);
-    const activities = await gc.getActivities(0, limit);
+    const activities = await gc.client.get(
+      'https://connectapi.garmin.com/activitylist-service/activities/search/activities',
+      {
+        params: {
+          start: 0,
+          limit: safeLimit,
+          activityType: 'running',
+        },
+      }
+    );
     return (activities as unknown as GarminActivityItem[]) ?? [];
   } catch (e) {
     const msg = String((e as Error)?.message || '');
-    if (msg.includes('401') || msg.includes('Unauthorized') || msg.includes('Token')) {
+    if (msg.includes('401') || msg.includes('Unauthorized') || msg.includes('Token') || msg.includes('504') || msg.includes('Timeout')) {
       garminSessionCache.delete(creds.email);
-      const gc = await loginGarminConnect(creds, true);
-      const activities = await gc.getActivities(0, limit);
-      return (activities as unknown as GarminActivityItem[]) ?? [];
+      try {
+        const gc = await loginGarminConnect(creds, true);
+        const activities = await gc.client.get(
+          'https://connectapi.garmin.com/activitylist-service/activities/search/activities',
+          {
+            params: {
+              start: 0,
+              limit: Math.min(safeLimit, 15),
+              activityType: 'running',
+            },
+          }
+        );
+        return (activities as unknown as GarminActivityItem[]) ?? [];
+      } catch (retryErr) {
+        throw retryErr;
+      }
     }
     throw e;
   }

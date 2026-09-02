@@ -21,10 +21,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Nessun account Garmin salvato. Inserisci prima email e password nelle Impostazioni.' }, { status: 400 });
   }
 
-  let limitToFetch = Math.max(50, Math.min(Number(body?.days) || 50, 100));
+  let limitToFetch = Math.max(1, Math.min(Number(body?.days) || 15, 20));
 
   if (body?.auto) {
-    limitToFetch = 50;
+    limitToFetch = 15;
   }
 
   try {
@@ -33,6 +33,7 @@ export async function POST(req: Request) {
 
     let savedCount = 0;
     let newlyDownloadedCount = 0;
+    let weatherLookupsCount = 0;
 
     for (const act of runningActivities) {
       const activityId = String(act.activityId);
@@ -52,7 +53,7 @@ export async function POST(req: Request) {
 
       const { data: existingLog } = await supabase
         .from('activity_log')
-        .select('id, raw')
+        .select('id, raw, coach_reviewed')
         .eq('user_id', user.id)
         .eq('garmin_activity_id', activityId)
         .maybeSingle();
@@ -61,14 +62,25 @@ export async function POST(req: Request) {
       const lat = (act.startLatitude as number) ?? (act.latitude as number) ?? null;
       const lon = (act.startLongitude as number) ?? (act.longitude as number) ?? null;
 
-      if (!weatherData && lat != null && lon != null) {
-        weatherData = await fetchWeatherForActivity(lat, lon, activityDate, timeLocal);
+      if (!weatherData && lat != null && lon != null && weatherLookupsCount < 3) {
+        try {
+          weatherLookupsCount += 1;
+          const weatherPromise = fetchWeatherForActivity(lat, lon, activityDate, timeLocal);
+          const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 2500));
+          weatherData = await Promise.race([weatherPromise, timeoutPromise]);
+        } catch {
+          weatherData = null;
+        }
       }
+
+      const isAlreadyReviewed = existingLog
+        ? Boolean(existingLog.coach_reviewed || existingLog.raw?.coach_reviewed)
+        : false;
 
       const rawWithEnrichment = {
         ...act,
         weather_info: weatherData,
-        coach_reviewed: existingLog ? Boolean(existingLog.raw?.coach_reviewed) : false,
+        coach_reviewed: isAlreadyReviewed,
       };
 
       const logPayload: Record<string, unknown> = {
@@ -79,12 +91,11 @@ export async function POST(req: Request) {
         distance_m: distanceM,
         duration_s: durationS,
         avg_hr_bpm: avgHr,
-        max_hr_bpm: maxHr,
         avg_pace_min_per_km: avgPaceMinKm,
         elevation_gain_m: elevationGain,
         elevation_loss_m: elevationLoss,
         weather_data: weatherData,
-        coach_reviewed: existingLog ? Boolean(existingLog.raw?.coach_reviewed) : false,
+        coach_reviewed: isAlreadyReviewed,
         raw: rawWithEnrichment,
       };
 
@@ -101,7 +112,7 @@ export async function POST(req: Request) {
         newlyDownloadedCount += 1;
       }
 
-      const { data: matchingWorkout } = await supabase
+      let { data: matchingWorkout } = await supabase
         .from('workouts')
         .select('id, status')
         .eq('user_id', user.id)
@@ -111,10 +122,25 @@ export async function POST(req: Request) {
         .limit(1)
         .maybeSingle();
 
+      if (!matchingWorkout) {
+        const { data: nextPlanned } = await supabase
+          .from('workouts')
+          .select('id, status')
+          .eq('user_id', user.id)
+          .eq('status', 'planned')
+          .order('date', { ascending: true })
+          .limit(1)
+          .maybeSingle();
+        if (nextPlanned) {
+          matchingWorkout = nextPlanned;
+        }
+      }
+
       if (matchingWorkout?.id) {
         await supabase
           .from('workouts')
           .update({
+            date: activityDate,
             status: 'completed',
             completed_activity: {
               garminActivityId: activityId,

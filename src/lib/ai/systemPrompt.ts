@@ -92,20 +92,32 @@ export function buildAssistantSystemPrompt({ medicalProfile, recentWorkouts, gar
 	const garminActivitiesText = garminActivities.length
 		? garminActivities
 				.map(a => {
-					const dist = a.distanceM ? `${(a.distanceM / 1000).toFixed(2)} km` : "distanza N/D";
-					const dur = a.durationS ? `${Math.round(a.durationS / 60)} min` : "durata N/D";
+					const title = a.activityName ? `"${a.activityName}"` : "Corsa";
+					const timeStr = a.startTimeLocal ? ` ore ${a.startTimeLocal.substring(11, 16)}` : "";
+					const dist = a.distanceM ? `${(a.distanceM / 1000).toFixed(2)} km (${Math.round(a.distanceM)} m)` : "distanza N/D";
+					const durMin = a.durationS ? Math.floor(a.durationS / 60) : 0;
+					const durSec = a.durationS ? Math.round(a.durationS % 60) : 0;
+					const dur = a.durationS ? `${durMin}m ${durSec}s (${Math.round(a.durationS)}s totali)` : "durata N/D";
 					const pace = a.avgPaceMinPerKm
 						? `${Math.floor(a.avgPaceMinPerKm)}'${Math.round((a.avgPaceMinPerKm % 1) * 60)
 								.toString()
 								.padStart(2, "0")}"/km`
 						: "";
 					const hrAvg = a.avgHrBpm ? `FC media ${Math.round(a.avgHrBpm)} bpm` : "";
-					const hrMax = a.maxHrBpm ? `FC max ${Math.round(a.maxHrBpm)} bpm` : "";
+					const hrMax = a.maxHrBpm ? `FC picco ${Math.round(a.maxHrBpm)} bpm` : "";
 					const hrText = [hrAvg, hrMax].filter(Boolean).join(", ");
-					const elev = (a.elevationGainM != null) ? `+${a.elevationGainM}m disl` : "";
-					const weather = a.weather ? `${a.weather.temperatureC}°C, ${a.weather.conditionDescription}` : "";
-					const details = [dist, dur, pace, hrText, elev, weather].filter(Boolean).join(", ");
-					return `- ${a.date} · Attività Garmin (${a.type}): ${details}`;
+					const cadAvg = a.avgCadence ? `Cadenza media ${Math.round(a.avgCadence)} spm` : "";
+					const cadMax = a.maxCadence ? `Cadenza max ${Math.round(a.maxCadence)} spm` : "";
+					const cadText = [cadAvg, cadMax].filter(Boolean).join(", ");
+					const elevGain = a.elevationGainM != null ? `+${a.elevationGainM}m salita` : "";
+					const elevLoss = a.elevationLossM != null ? `-${a.elevationLossM}m discesa` : "";
+					const elevText = [elevGain, elevLoss].filter(Boolean).join(" / ");
+					const calText = a.calories ? `${a.calories} kcal` : "";
+					const weather = a.weather
+						? `Meteo: ${a.weather.temperatureC}°C, ${a.weather.conditionDescription}${a.weather.humidityPercent ? `, umidità ${a.weather.humidityPercent}%` : ""}${a.weather.windSpeedKmh ? `, vento ${a.weather.windSpeedKmh} km/h` : ""}`
+						: "";
+					const allParams = [title, dist, dur, pace, hrText, cadText, elevText, calText, weather].filter(Boolean).join(" | ");
+					return `- ${a.date}${timeStr} · ${allParams} (ID Garmin: ${a.garminActivityId})`;
 				})
 				.join("\n")
 		: "Nessuna attività di corsa registrata nel database da Garmin Connect.";
@@ -146,9 +158,11 @@ Il coach unisce le conoscenze mediche riabilitative con la saggezza dell'atletic
      * Incremento del volume non superiore al 10–15% settimanale rispetto al carico tollerato.
    - Sessione #12: Test di Consolidamento per valutare i guadagni di efficienza e impostare il ciclo successivo.
 
-3. SINTESI A 360°: DATI REALI, TUTELA SPECIFICA DELL'ANCA E ADATTAMENTO DINAMICO:
-   In ogni analisi di sessione completata, revisione attività o adattamento del piano, incrocia sempre 4 elementi fondamentali:
-   - Dati Reali Garmin & Sessione: analizza cadenza reale (se <170 spm sollecita troppo l'anca: correggi verso 175–185 spm), FC media/max rispetto al passo target, dislivello (+m e soprattutto -m in discesa che sovraccaricano l'articolazione coxo-femorale) e condizioni meteo.
+3. SINTESI A 360°: DATI REALI COMPLETI, TUTELA SPECIFICA DELL'ANCA E ADATTAMENTO DINAMICO:
+   In ogni analisi di sessione completata, revisione attività o adattamento del piano:
+   - L'utente menziona la sessione indicando semplicemente il titolo (es. "Nettuno - Test Calibrazione RPE") o comunicando di aver eseguito il test/allenamento.
+   - Tu accedi a TUTTI i dati fisiologici, biomeccanici ed ambientali presenti nello STORICO ATTIVITÀ GARMIN (distanza precisa, durata esatta, passo medio, FC media e picco FC max, cadenza media e massima, dislivello positivo salita e negativo discesa, calorie, temperatura meteo, umidità, vento, orario di inizio).
+   - Analizza ogni parametro in dettaglio: la cadenza reale (se <170 spm sollecita troppo l'anca: correggi verso 175–185 spm), l'impatto del meteo/umidità sulla deriva termico-cardiaca, il dislivello (+m e soprattutto -m in discesa che sovraccarica l'articolazione coxo-femorale) e la variabilità della frequenza cardiaca.
    - Tutela Specifica dell'Anca (Coxartrosi/Infortuni): monitora costantemente il dolore (soglia ≤3–4/10 che deve rientrare entro 24h, assenza di zoppia o dolore notturno), prescrivi superfici sterrate/cedevoli e insisti sul rinforzo del medio/grande gluteo per stabilizzare il bacino in appoggio monopodalico.
    - Mentalità del "Runner Evoluto" (Simone Luciani): se i dati o il feedback mostrano fatica acuta, FC alta o fastidi all'anca, rimodula proattivamente il piano riducendo il carico o aumentando la camminata nel blocco JSON.
    - Consigli Pratici ("Tips") Azionabili: fornisci indicazioni concrete su postura eretta allineata dalle caviglie, primi 5 minuti di riscaldamento shuffle, rilassamento di spalle e mandibola, esercizi per i piedi scalzi e igiene del sonno.

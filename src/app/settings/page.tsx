@@ -25,7 +25,6 @@ function SettingsForm() {
   const [garminStatus, setGarminStatus] = useState<GarminStatusInfo | null>(null);
   const [savingGarmin, setSavingGarmin] = useState(false);
   const [garminMsg, setGarminMsg] = useState<string | null>(null);
-  const [syncing, setSyncing] = useState(false);
 
   function loadGarminStatus() {
     fetch('/api/garmin/credentials')
@@ -100,22 +99,6 @@ function SettingsForm() {
     setGarminMsg('Credenziali Garmin rimosse.');
   }
 
-  async function handleSync(auto = true, days?: number) {
-    setSyncing(true);
-    setGarminMsg(null);
-    const res = await fetch('/api/garmin/sync', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(auto ? { auto: true } : { days }),
-    });
-    const data = await res.json();
-    setSyncing(false);
-    setGarminMsg(res.ok ? data.message : data.error);
-    if (res.ok) {
-      loadGarminStatus();
-    }
-  }
-
   return (
     <div className="flex flex-col gap-6 pt-2">
       <header className="flex flex-col gap-0.5">
@@ -167,7 +150,7 @@ function SettingsForm() {
         <div>
           <p className="font-display text-base font-bold text-ink">Garmin Connect</p>
           <p className="mt-0.5 text-xs text-ink-soft">
-            Sincronizza le tue corse storiche nel database per il Coach.
+            Sincronizzazione automatica e continua delle tue corse in background.
           </p>
         </div>
 
@@ -208,17 +191,17 @@ function SettingsForm() {
 
         {garminStatus?.connected && (
           <div className="mt-1 flex flex-col gap-3 border-t border-line/60 pt-3">
-            <div className="flex flex-col gap-1 rounded-ios bg-bg p-3 text-xs">
+            <div className="flex flex-col gap-1.5 rounded-ios bg-bg p-3 text-xs">
               <div className="flex items-center justify-between">
                 <span className="text-ink-soft">Stato:</span>
-                <span className="font-semibold text-recovery-dark">Sincronizzato ✓</span>
+                <span className="font-semibold text-recovery-dark">Sincronizzazione in background attiva ✓</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-ink-soft">Corse in DB:</span>
+                <span className="text-ink-soft">Corse sincronizzate nel DB:</span>
                 <span className="font-semibold">{garminStatus.totalActivities ?? 0}</span>
               </div>
               <div className="flex items-center justify-between text-[11px] text-ink-faint">
-                <span>Ultimo controllo:</span>
+                <span>Ultima sincronizzazione automatica:</span>
                 <span>
                   {garminStatus.lastSyncAt
                     ? new Date(garminStatus.lastSyncAt).toLocaleString('it-IT', { day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit' })
@@ -226,24 +209,9 @@ function SettingsForm() {
                 </span>
               </div>
             </div>
-
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                onClick={() => handleSync(true)}
-                disabled={syncing}
-                className="ios-btn-active rounded-pill bg-track px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm disabled:opacity-60"
-              >
-                {syncing ? 'Sincronizzo…' : 'Sincronizza Ora'}
-              </button>
-
-              <button
-                onClick={() => handleSync(false, 365)}
-                disabled={syncing}
-                className="text-[11px] font-semibold text-ink-soft underline hover:text-ink disabled:opacity-60"
-              >
-                Ripristina intero storico (365 gg)
-              </button>
-            </div>
+            <p className="text-[11px] text-ink-faint leading-relaxed">
+              💡 Le nuove sessioni registrate dal tuo orologio Garmin vengono acquisite automaticamente ogni volta che apri l'app o accedi, senza dover premere alcun pulsante.
+            </p>
           </div>
         )}
 

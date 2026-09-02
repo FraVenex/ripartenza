@@ -54,6 +54,8 @@ export async function loadRecentWorkouts(
 export interface GarminActivityLogItem {
   id: string;
   garminActivityId: string;
+  activityName?: string | null;
+  startTimeLocal?: string | null;
   date: string;
   type: string;
   distanceM: number | null;
@@ -61,10 +63,14 @@ export interface GarminActivityLogItem {
   avgHrBpm: number | null;
   maxHrBpm: number | null;
   avgPaceMinPerKm: number | null;
+  avgCadence?: number | null;
+  maxCadence?: number | null;
   elevationGainM: number | null;
   elevationLossM: number | null;
+  calories?: number | null;
   weather?: ActivityWeatherSummary | null;
   coachReviewed?: boolean;
+  raw?: Record<string, unknown> | null;
 }
 
 export async function loadRecentGarminActivities(
@@ -91,12 +97,19 @@ export async function loadRecentGarminActivities(
     const maxHr = (row.max_hr_bpm as number) ?? rawObj.maxHR ?? rawObj.maxHeartRateInBeatsPerMinute ?? rawObj.summary?.maxHeartRateInBeatsPerMinute ?? null;
     const elevGain = (row.elevation_gain_m as number) ?? rawObj.elevationGain ?? rawObj.elevationGainInMeters ?? null;
     const elevLoss = (row.elevation_loss_m as number) ?? rawObj.elevationLoss ?? rawObj.elevationLossInMeters ?? null;
+    const avgCadence = rawObj.averageRunningCadenceInStepsPerMinute ?? rawObj.averageCadence ?? null;
+    const maxCadence = rawObj.maxRunningCadenceInStepsPerMinute ?? rawObj.maxCadence ?? null;
+    const calories = (row.calories as number) ?? rawObj.calories ?? null;
     const weather = (row.weather_data as ActivityWeatherSummary) ?? rawObj.weather_info ?? null;
     const coachReviewed = (row.coach_reviewed as boolean) ?? Boolean(rawObj.coach_reviewed);
+    const activityName = rawObj.activityName ?? rawObj.name ?? null;
+    const startTimeLocal = rawObj.startTimeLocal ?? null;
 
     return {
       id: row.id as string,
       garminActivityId: row.garmin_activity_id as string,
+      activityName,
+      startTimeLocal,
       date: row.date as string,
       type: (row.type as string) ?? 'running',
       distanceM: (row.distance_m as number) ?? null,
@@ -104,10 +117,14 @@ export async function loadRecentGarminActivities(
       avgHrBpm: (row.avg_hr_bpm as number) ?? null,
       maxHrBpm: maxHr,
       avgPaceMinPerKm: (row.avg_pace_min_per_km as number) ?? null,
+      avgCadence,
+      maxCadence,
       elevationGainM: elevGain,
       elevationLossM: elevLoss,
+      calories,
       weather,
       coachReviewed,
+      raw: rawObj,
     };
   });
 }

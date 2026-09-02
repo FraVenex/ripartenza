@@ -2,7 +2,6 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { mapWorkoutRow } from '@/lib/server/userContext';
-import { WorkoutCard } from '@/components/WorkoutCard';
 import { WorkoutTypeBadge } from '@/components/Badge';
 import { LoadLine } from '@/components/LoadLine';
 import type { Workout } from '@/lib/types';
@@ -48,8 +47,6 @@ export default async function DashboardPage() {
   const totalSessions = 12;
   const completedCount = completedWorkouts.length;
   const progressPercent = Math.min(100, Math.round((completedCount / totalSessions) * 100));
-
-  const upcomingSlice = plannedWorkouts.slice(0, 6);
 
   return (
     <div className="flex flex-col gap-6 pt-2">
@@ -207,38 +204,36 @@ export default async function DashboardPage() {
         </section>
       ) : (
         <section className="card p-6 text-center text-ink-soft shadow-card">
-          <p className="text-sm font-bold text-ink">Tutte le 12 sessioni del ciclo corrente sono state completate! 🎉</p>
-          <p className="mt-1 text-xs">Parla con il Coach per analizzare i risultati del test finale e impostare il prossimo blocco da 6 settimane.</p>
-          <Link
-            href="/coach"
-            className="ios-btn-active mt-3 inline-block rounded-pill bg-track px-4 py-2 text-xs font-bold text-white"
-          >
-            Valuta i Risultati col Coach
-          </Link>
+          {completedWorkouts.length > 0 && (activePlanRow?.goal?.toLowerCase().includes('test') || completedWorkouts.some((w) => w.type === 'test')) ? (
+            <div className="flex flex-col items-center gap-3">
+              <span className="text-3xl">🧪</span>
+              <h3 className="font-display text-lg font-bold text-ink">Test di Valutazione Completato!</h3>
+              <p className="max-w-md text-xs leading-relaxed">
+                Hai registrato la tua corsa di test. Apri la chat con il Coach per analizzare i dati fisiologici e costruire il tuo piano da 6 settimane (12 sessioni).
+              </p>
+              <Link
+                href="/coach"
+                className="ios-btn-active mt-1 inline-block rounded-pill bg-track px-5 py-2.5 text-xs font-bold text-white shadow-sm hover:opacity-95"
+              >
+                Analizza il Test con il Coach 💬
+              </Link>
+            </div>
+          ) : (
+            <>
+              <p className="text-sm font-bold text-ink">Tutte le 12 sessioni del ciclo corrente sono state completate! 🎉</p>
+              <p className="mt-1 text-xs">Parla con il Coach per analizzare i risultati del test finale e impostare il prossimo blocco da 6 settimane.</p>
+              <Link
+                href="/coach"
+                className="ios-btn-active mt-3 inline-block rounded-pill bg-track px-4 py-2 text-xs font-bold text-white"
+              >
+                Valuta i Risultati col Coach
+              </Link>
+            </>
+          )}
         </section>
       )}
 
-      {upcomingSlice.length > 1 && (
-        <section className="flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <h2 className="font-display text-base font-bold text-ink">Prossime Sessioni in Programma</h2>
-            <Link href="/archive" className="font-stat text-xs font-semibold text-track hover:underline">
-              Vedi tutte nell'Archivio →
-            </Link>
-          </div>
-          <div className="flex flex-col gap-2">
-            {upcomingSlice.slice(1).map((w, idx) => (
-              <WorkoutCard
-                key={w.id}
-                workout={w}
-                indexLabel={w.type === 'test' ? 'Test' : `Sessione #${completedCount + idx + 2}`}
-              />
-            ))}
-          </div>
-        </section>
-      )}
-
-      <section className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2">
+      <section className="grid grid-cols-2 gap-3 pt-2">
         <Link
           href="/progress"
           className="ios-card-active card p-4 flex flex-col gap-1 text-ink shadow-card hover:border-track/40"
@@ -248,16 +243,8 @@ export default async function DashboardPage() {
           <span className="text-[11px] text-ink-faint">Consolidamento e carico</span>
         </Link>
         <Link
-          href="/archive"
-          className="ios-card-active card p-4 flex flex-col gap-1 text-ink shadow-card hover:border-track/40"
-        >
-          <span className="font-stat text-base">📁</span>
-          <span className="font-display text-xs font-bold">Archivio Sessioni</span>
-          <span className="text-[11px] text-ink-faint">Passate e future</span>
-        </Link>
-        <Link
           href="/profile"
-          className="ios-card-active card p-4 flex flex-col gap-1 text-ink shadow-card hover:border-track/40 col-span-2 sm:col-span-1"
+          className="ios-card-active card p-4 flex flex-col gap-1 text-ink shadow-card hover:border-track/40"
         >
           <span className="font-stat text-base">🩺</span>
           <span className="font-display text-xs font-bold">Profilo Medico</span>
